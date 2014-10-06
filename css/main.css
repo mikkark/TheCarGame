@@ -18,9 +18,17 @@ textarea {
     color: #222;
 }
 
+div {
+    border: 1px solid;
+}
+
 html {
     font-size: 1em;
     line-height: 1.4;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /*
@@ -212,6 +220,14 @@ textarea {
 
 .clearfix {
     *zoom: 1;
+}
+
+.toggleButton {
+    border: outset thick;
+}
+
+.toggleButton.pressed {
+    border: inset thick;
 }
 
 /* ==========================================================================

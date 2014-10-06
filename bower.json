@@ -1,0 +1,17 @@
+{
+  "name": "WebStormTest",
+  "version": "0.0.0",
+  "authors": [
+    "mikkark <mikkark@gmail.com>"
+  ],
+  "description": "test project",
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

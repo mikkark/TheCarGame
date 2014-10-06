@@ -9,34 +9,259 @@
         <title></title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/jquery-1.10.2.min.js"></script>
         <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="bower_components/rxjs/dist/rx.all.js"></script>
+        <script src="bower_components/angular-rx/dist/rx.angular.js"></script>
+        <script type="text/javascript">
+            ($(function() {
+            }));
+        </script>
+        <script type="text/javascript">
+            var app = angular.module('app', ['rx']);
+
+            app.directive('canvas', function () {
+                return {
+                    templateNamespace: 'svg',
+                    template: '<svg ng-click="add()" height="400" style="display: inline-block" width="60%" ng-transclude></svg>',
+                    restrict: 'E',
+                    replace: true,
+                    transclude: true,
+                    link: function(scope, element, attr) {
+                        scope.add = function() {
+                            if (scope.addDevice) {
+                                scope.devices.push({ name: 'new device ' + scope.devices.length, X: 100, Y: 100 });
+                            }
+                            else if (scope.addLinkstation) {
+                                scope.linkstations.push({ X: 100, Y: 100, reach: 80 });
+                                scope.devices.forEach(function(device) { scope.relink(device)});
+                            }
+                        };
+                    }
+                }
+            });
+
+            app.directive('linkStation', function () {
+                return {
+                    templateNamespace: 'svg',
+                    template: '<circle r=5></circle>',
+                    restrict: 'E',
+                    replace: true
+                };
+            });
+
+            app.directive('device', function () {
+                return {
+                    templateNamespace: 'svg',
+                    template: '<circle r=10 style="background-color: #105cb6"></circle>',
+                    restrict: 'E',
+                    replace: true
+                };
+            });
+
+            app.directive('link', function () {
+                return {
+                    templateNamespace: 'svg',
+                    template:   '<g>' +
+                                '<line x1="{{link.d.X}}" x2="{{link.l.X}}" y1="{{link.d.Y}}" y2="{{link.l.Y}}" stroke="5" style="stroke:rgb(255,0,0);stroke-width:2">' +
+                                '</line>' +
+                                '<text x="{{link.d.X}}" y="{{link.d.Y}}" fill="red">power:{{link.currPower}}</text>' +
+                                '</g>',
+                    restrict: 'E',
+                    scope: {
+                        link: '=link'
+                    },
+                    replace: true
+                };
+            });
+
+            app.directive('rxDrag', ['$document', function($document) {
+                return function(scope, element, attr) {
+                    var device = scope.devices.filter(function(elem) { return elem.name == attr.name })[0];
+                    var offsetX = Math.round($('#canvas').position().left);
+                    var offsetY = Math.round($('#canvas').position().top);
+
+                    element.css({
+                        position: 'relative',
+                        border: '1px solid red',
+                        backgroundColor: 'lightgrey',
+                        cursor: 'pointer'
+                    });
+
+                    element.on('mousedown', function(event) {
+                        event.preventDefault();
+                        $document.on('mousemove', mousemove);
+                        $document.on('mouseup', mouseup);
+                    });
+
+                    function mousemove(event) {
+                        device.Y = event.pageY - offsetY;
+                        device.X = event.pageX - offsetX;
+                        scope.$apply();
+                    }
+
+                    function mouseup() {
+                        $document.off('mousemove', mousemove);
+                        $document.off('mouseup', mouseup);
+                    }
+                };
+            }]);
+
+            app.controller('main', ['$scope', 'observeOnScope', function($scope, observeOnScope) {
+                var linkstations = [
+                    { X: 400, Y: 400, reach: 300 },
+                    { X: 300, Y: 300, reach: 200 },
+                    { X: 150, Y: 200, reach: 100 },
+                    { X: 600, Y: 90, reach: 50 }
+                ];
+
+                var devices = [
+                    { name: 'device 1', X: 200, Y: 250 },
+                    { name: 'device 2', X: 300, Y: 90 },
+                    { name: 'device 3', X: 150, Y: 150 },
+                    { name: 'device 4', X: 125, Y: 60 }
+                ];
+
+                var links = [
+                    { d: devices[0], l: linkstations[0], currPower: 0 },
+                    { d: devices[1], l: linkstations[0], currPower: 0 },
+                    { d: devices[2], l: linkstations[0], currPower: 0 },
+                    { d: devices[3], l: linkstations[0], currPower: 0 }
+                ];
+
+                var getCurrentLink = function(device) {
+                    var currLink = $scope.links.filter(function(link) { return link.d === device; })[0];
+
+                    if (!currLink) {
+                        currLink = {
+                            d: device,
+                            l: { X:0, Y: 0, reach: 0 }
+                        }
+                    }
+
+                    return currLink;
+                };
+
+                var getDist = function(elem1, elem2) {
+                    return Math.sqrt(Math.pow(Math.abs(elem1.X - elem2.X), 2) +
+                            Math.pow(Math.abs(elem1.Y - elem2.Y), 2));
+                };
+
+                var getPower = function(dist, reach) {
+                    return dist > reach ? 0.0 : Math.pow((reach - dist), 2);
+                };
+
+                $scope.relink = function(device) {
+                    var currLink = getCurrentLink(device);
+                    var currLinkstation = currLink.l;
+
+                    var currDist = getDist(device, currLinkstation);
+                    var currPower = getPower(currDist, currLinkstation.reach);
+
+                    var preferedLinkstationAndPower = $scope.linkstations.reduce(function(acc, curr) {
+                        var dist = getDist(device, curr);
+                        var power = getPower(dist, curr.reach);
+
+                        if (power > 0 && power > currPower) {
+                            return { l: curr, p: currPower };
+                        }
+                        else {
+                            return acc;
+                        }
+                    }, { l: currLinkstation, p: currPower });
+
+                    currLink.currPower = currPower;
+
+                    if (preferedLinkstationAndPower.l !== currLinkstation)
+                    {
+                        currLink.l = preferedLinkstationAndPower.l;
+                        currLink.currPower = preferedLinkstationAndPower.p;
+
+                        if($scope.links.indexOf(currLink) < 0) {
+                            $scope.links.push(currLink);
+                        }
+                    }
+                    else if (currPower == 0)
+                    {
+                        var index = $scope.links.indexOf(currLink);
+                        if (index >= 0)
+                        {
+                            $scope.links.splice(index, 1);
+                        }
+                    }
+                };
+
+                $scope.getCurrentPower = function(device) {
+                    var currLink = getCurrentLink(device);
+                    return currLink.currPower;
+                };
+
+                $scope.devices = devices;
+                $scope.linkstations = linkstations;
+                $scope.links = links;
+
+                $scope.addDevice = false;
+                $scope.addLinkstation = false;
+
+                devices.forEach(function(device) { $scope.relink(device)});
+
+                var datachanges = observeOnScope($scope, function($scope) {
+                    return $scope.devices.map(function(device) {
+                        return { d: device, x: device.X, y: device.Y };
+                    })
+                }, true);
+                datachanges.subscribe(function(change) {
+                    for (var i = 0; i < change.newValue.length; i++){
+                        var newD = change.newValue[i].d;
+
+                        if (i >= change.oldValue.length)
+                        {
+                            $scope.relink(newD);
+                            break;
+                        }
+
+                        var oldD = change.oldValue[i].d;
+
+                        if (newD.X != oldD.X || newD.Y != oldD.Y) {
+                            $scope.relink(newD);
+                            break;
+                        }
+                    }
+                });
+            }]);
+        </script>
     </head>
-    <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
+    <body ng-app="app">
 
-        <!-- Add your site or application content here -->
-        <p>Hello world! This is HTML5 Boilerplate.</p>
+        <p>This page shows link stations, devices and the preferred link station for each device.</p>
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.10.2.min.js"><\/script>')</script>
+        <div ng-controller="main">
+
+            <div style="display: inline-block;margin-right:5px;width: 20%;vertical-align: top">
+                <div id="deviceControls" ng-repeat="device in devices">
+                    <input type="text" ng-model="device.name "/>
+                    <input type="number" ng-model="device.X" style="display: block"/>
+                    <input type="number" ng-model="device.Y" style="display: block"/>
+                    <p>current power: {{getCurrentPower(device)}}</p>
+                </div>
+            </div>
+            <div id="buttons" style="display: inline-block;width:10%;margin-right:5px">
+                <input type="button" class="toggleButton" ng-class="{'pressed' : addDevice}" ng-click="addDevice=!addDevice" value="Add device" />
+                <input type="button" class="toggleButton" ng-class="{'pressed' : addLinkstation}" ng-click="addLinkstation=!addLinkstation" value="Add link station" />
+            </div>
+
+            <canvas ng-cloak id="canvas" style="margin-left: 10px;border: 5px solid;">
+                <link-station ng-repeat="device in linkstations" ng-attr-cx="{{device.X}}" ng-attr-cy="{{device.Y}}"></link-station>
+                <device rx-drag ng-repeat="device in devices" data-name="{{device.name}}" ng-attr-cx="{{device.X}}" ng-attr-cy="{{device.Y}}"></device>
+                <link ng-repeat="link in links" link="link" />
+            </canvas>
+        </div>
+
         <script src="js/plugins.js"></script>
         <script src="js/main.js"></script>
 
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-        <script>
-            (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
-            function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
-            e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-            e.src='//www.google-analytics.com/analytics.js';
-            r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
-            ga('create','UA-XXXXX-X');ga('send','pageview');
-        </script>
     </body>
 </html>
