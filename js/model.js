@@ -7,7 +7,8 @@ createModel = function () {
 
     model.MAX_GEARS = 6;
     model.STEERING_SAMPLING_RATE = 10;
-    model.MOVING_RATE = 15;
+    model.MOVING_RATE = 1;
+    model.UNIT_OF_MOVEMENT = 4; //pixels per 15ms
 
     function Device(name, keys, engine) {
         this.name = name;

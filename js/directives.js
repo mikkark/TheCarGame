@@ -3,7 +3,7 @@
 app.directive('canvas', function () {
     return {
         templateNamespace: 'svg',
-        template: '<svg ng-click="add()" height="400" style="display: inline-block" width="60%" ng-transclude></svg>',
+        template: '<svg ng-click="add()" height="800" style="display: inline-block" width="60%" ng-transclude></svg>',
         restrict: 'E',
         replace: true,
         transclude: true
@@ -49,15 +49,23 @@ app.directive('steering', function () {
 app.directive('device', function () {
     return {
         templateNamespace: 'svg',
-        //template: '<circle cx="200" cy="200" r=10 data-name="{{device.name}}" style="background-color: #105cb6"></circle>',
         templateUrl: './html/carTemplate.html',
         restrict: 'E',
         replace: true,
         transclude: true,
-        link: function (scope) {
+        link: function (scope, element) {
 
             var device = scope.device;
             device.accelerationTimestamp = 0;
+
+            var right = $('#rightFront', element);
+            var left = $('#leftFront', element);
+
+            device.rightTyreCenterY = Number(right.attr('y1')) + ((Number(right.attr('y2')) - Number(right.attr('y1')) ) / 2);
+            device.rightTyreCenterX = Number(right.attr('x1')) + ((Number(right.attr('x2')) - Number(right.attr('x1')) ) / 2);
+
+            device.leftTyreCenterY = Number(left.attr('y1')) + ((Number(left.attr('y2')) - Number(left.attr('y1')) ) / 2);
+            device.leftTyreCenterX = Number(left.attr('x1')) + ((Number(left.attr('x2')) - Number(left.attr('x1')) ) / 2);
 
             var keyup = Rx.Observable.fromEvent(document, 'keyup');
             var keydown = Rx.Observable.fromEvent(document, 'keydown');
@@ -173,8 +181,8 @@ app.directive('movingobject', ['observeOnScope', function(observeOnScope) {
                 var currX = Number(element.attr('x'));
                 var currY = Number(element.attr('y'));
 
-                var newY = (Math.sin(toRadians(newAngle)) * 2) + currY;
-                var newX = (Math.cos(toRadians(newAngle)) * 2) + currX;
+                var newY = (Math.sin(toRadians(newAngle)) * model.UNIT_OF_MOVEMENT) + currY;
+                var newX = (Math.cos(toRadians(newAngle)) * model.UNIT_OF_MOVEMENT) + currX;
 
                 element.attr('x', newX);
                 element.attr('y', newY);
