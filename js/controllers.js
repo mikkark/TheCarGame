@@ -1,21 +1,28 @@
 'use strict'
 
 app.controller('main', ['$scope', function($scope) {
+
+    var ferrariEngine = new model.Engine('ferrari', 15000, 0.5, 320);
+    var skodaEngine = new model.Engine('skoda', 6500, 0.2, 180);
+    var tractorEngine = new model.Engine('tractor', 5000, 0.5, 60);
+    var truckEngine = new model.Engine('truck', 7000, 0.15, 80);
+
+    var keys1 = { gas: "w", left: "a", right: "d" };
+    var keys2 = { gas: "y", left: "g", right: "j" };
+    var keys3 = { gas: "f", left: "x", right: "v" };
+    var keys4 = { gas: "p", left: "l", right: "ä" };
+
+    var ferrari = new model.Device('ferrari', keys2, ferrariEngine);
+    ferrari.steering = new model.Steering(3);
+
     var devices = [
-        new Device('device 1', 200, 250, "w"),
-        new Device('device 2', 300, 90, "p"),
-        new Device('device 3', 150, 150, "8"),
-        new Device('device 4', 125, 60, "y")
+        ferrari,
+        new model.Device('tractor', keys1, tractorEngine),
+        new model.Device('truck', keys3, truckEngine),
+        new model.Device('skoda rs', keys4, skodaEngine)
     ];
 
     $scope.devices = devices;
-
     $scope.addDevice = false;
 
-    var keyup = Rx.Observable.fromEvent(document, 'keyup');
-    var keydown = Rx.Observable.fromEvent(document, 'keydown');
-
-    $scope.keyboard = new Rx.Subject();
-
-    keyup.subscribe($scope.keyboard);
 }]);

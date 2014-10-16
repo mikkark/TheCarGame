@@ -25,6 +25,10 @@
 
             var app = angular.module('app', ['rx']);
 
+            var getCenterOfLine = function (x1, x2, y1, y2) {
+                var dist = Math.sqrt(Math.pow(Math.abs(x2 - x1), 2) + Math.pow(Math.abs(y2 - y1), 2));
+            }
+
         </script>
         <script src="js/directives.js"></script>
         <script src="js/controllers.js"></script>
@@ -38,13 +42,11 @@
             <div style="display: inline-block;margin-right:5px;width: 20%;vertical-align: top">
                 <div id="deviceControls" ng-repeat="device in devices">
                     <input type="text" ng-model="device.name "/>
-                    <input type="number" ng-model="device.X" style="display: block"/>
-                    <input type="number" ng-model="device.Y" style="display: block"/>
-                    <powermeter />
+                    <speedometer></speedometer>
+                    <powermeter></powermeter>
+                    <steering></steering>
+                    <gearbox></gearbox>
                 </div>
-            </div>
-            <div id="buttons" style="display: inline-block;width:10%;margin-right:5px">
-                <input type="button" class="toggleButton" ng-class="{'pressed' : addDevice}" ng-click="addDevice=!addDevice" value="Add device" />
             </div>
 
             <canvas ng-cloak id="canvas" style="margin-left: 10px;border: 5px solid;">
