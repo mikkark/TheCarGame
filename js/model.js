@@ -8,9 +8,11 @@ createModel = function () {
     model.MAX_GEARS = 6;
     model.STEERING_SAMPLING_RATE = 10;
     model.MOVING_RATE = 1;
-    model.UNIT_OF_MOVEMENT = 4; //pixels per 15ms
+    model.UNIT_OF_MOVEMENT = 2; //pixels per 15ms
+    model.GAS_PEDAL_SAMPLING_RATE = 15;
+    model.CHECKPOINT_CHECK_RATE = 100;
 
-    function Device(name, keys, engine) {
+    function Car(name, keys, engine) {
         this.name = name;
         this.gas = keys.gas;
         this.left = keys.left;
@@ -20,11 +22,11 @@ createModel = function () {
         this.steering = new Steering(1);
     }
 
-    Device.prototype.accelerate = function () {
+    Car.prototype.accelerate = function () {
         this.engine.giveRevs();
     };
 
-    Device.prototype.break = function () {
+    Car.prototype.break = function () {
         this.engine.revsDown();
     };
 
@@ -85,7 +87,7 @@ createModel = function () {
     };
 
     model.Steering = Steering;
-    model.Device = Device;
+    model.Car = Car;
     model.Engine = Engine;
 
     return model;

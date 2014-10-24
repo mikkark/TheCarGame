@@ -6,7 +6,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>devices and link stations</title>
+        <title>A slicks'n'slide clone</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="css/normalize.css">
@@ -30,28 +30,34 @@
             }
 
         </script>
-        <script src="js/directives.js"></script>
+        <script src="js/services.js"></script>
         <script src="js/controllers.js"></script>
+        <script src="js/directives.js"></script>
     </head>
     <body ng-app="app">
 
-        <p>This is a very rudimentary slicks'n'slide clone type of a car game.</p>
-
         <div ng-controller="main">
 
-            <div style="display: inline-block;margin-right:5px;width: 20%;vertical-align: top">
-                <div id="deviceControls" ng-repeat="device in devices">
-                    <input type="text" ng-model="device.name "/>
-                    <speedometer></speedometer>
-                    <powermeter></powermeter>
-                    <steering></steering>
-                    <gearbox></gearbox>
+            <p>This is a very rudimentary slicks'n'slide clone type of a car game.</p>
+
+            <div style="display: inline-block;margin-right:5px;width: 40%;vertical-align: top">
+                <input type="button" value="Start race" ng-click="start()" style="display: inline-block;"/>
+                <div id="carControls" ng-repeat="car in cars">
+                    <div style="display: inline-block;width: 40%;vertical-align: top">
+                        <input type="text" ng-model="car.name "/>
+                        <speedometer></speedometer>
+                        <steering></steering>
+                        <gearbox></gearbox>
+                    </div>
+                    <powermeter style="display: inline-block;width: 20%;vertical-align: bottom"></powermeter>
+                    <lapcount style="display: inline-block;width: 30%;vertical-align: top" carname="car.name"></lapcount>
                 </div>
             </div>
 
-            <canvas ng-cloak id="canvas" style="margin-left: 10px;border: 5px solid;">
-                <device movingobject rx-drag ng-repeat="device in devices"></device>
-            </canvas>
+            <svg width="900" height="600">
+                <track ng-cloak id="track" style="border: 5px solid;" transform="scale ( 1.2 )"/>
+                <car movingobject ng-repeat="car in cars" transform="scale ( 1.2 )"></car>
+            </svg>
         </div>
 
         <script src="js/plugins.js"></script>
