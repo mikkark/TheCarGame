@@ -4,7 +4,7 @@ app.directive('track', function () {
     return {
         templateNamespace: 'svg',
         //template: '<svg height="800" style="display: inline-block" width="60%" ng-transclude></svg>',
-        templateUrl: './html/track1.svg',
+        templateUrl: './html/track1.html',
         restrict: 'E',
         replace: true,
         transclude: true
@@ -246,7 +246,7 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
         },
         template: '<div>' +
                     '<div>lap:{{lap}}. last:{{lastLapTime}}s. best:{{bestLapTime}}</div>' +
-                    '<div ng-repeat="checkpointtime in checkpointtimes2">' +
+                    '<div ng-repeat="checkpointtime in checkpointtimes">' +
                         '<div>{{checkpointtime}}</div>' +
                     '</div>' +
                   '</div>',
@@ -273,17 +273,20 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
                 }
             }).repeat();
 
+            var lapSubject = new Rx.Subject();
+
             aggregated.subscribe(function (elapsedTime) {
                 scope.lastLapTime = elapsedTime / 1000;
                 scope.checkpointtimes = [];
                 scope.$apply();
+
+                lapSubject.onNext(elapsedTime);
             });
 
-            var bestLapTime = aggregated.scan(0, function (acc, lapTime) {
+            var bestLapTime = lapSubject.scan(0, function (acc, lapTime) {
                 if (lapTime < acc || acc === 0) {
                     return lapTime;
                 } else {
-                    console.log('not better time:' + lapTime + ',vs. ' + acc);
                     return acc;
                 }
             });
