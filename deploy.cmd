@@ -85,21 +85,18 @@ goto :EOF
 :: Deployment
 :: ----------
 
-:Deployment
-echo Handling node.js deployment.
+ECHO 1. Select node version
+call :SelectNodeVersion
 
-:: Install bower packages
-  call npm install bower
-  IF !ERRORLEVEL! NEQ 0 goto error
+ECHO 2. Install bower packages
 
-  ./node_modules/.bin/bower install rxjs
-    IF !ERRORLEVEL! NEQ 0 goto error
+call !NPM_CMD! install bower
+IF !ERRORLEVEL! NEQ 0 goto error
 
-  ./node_modules/.bin/bower install angular
-    IF !ERRORLEVEL! NEQ 0 goto error
-
-  ./node_modules/.bin/bower install angular-rx
-  IF !ERRORLEVEL! NEQ 0 goto error
+call .\node_modules\.bin\bower install rxjs
+call .\node_modules\.bin\bower install angular
+call .\node_modules\.bin\bower install angular-rx
+IF !ERRORLEVEL! NEQ 0 goto error
 
 :: 1. KuduSync
 IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
