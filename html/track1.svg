@@ -16,9 +16,9 @@
   <line checkpoint checkpointId="4" id="svg_16" y2="220.428589" x2="139.285736" y1="223.428589" x1="11.285736" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
   <line checkpoint checkpointId="2" id="svg_17" y2="229.428589" x2="634.285736" y1="230.428589" x1="519.285736" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
   <text xml:space="preserve" text-anchor="middle" font-family="serif" font-size="24" id="svg_21" y="344.571442" x="326.285736" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0" stroke="#000000" fill="#000000">start/finish</text>
-    <ellipse carstartpos ry="5" rx="11" id="svg_22" cy="434.000031" cx="291.285736" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
-    <ellipse carstartpos id="svg_24" ry="5" rx="11" cy="391.928574" cx="249.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
-    <ellipse carstartpos id="svg_25" ry="5" rx="11" cy="435.928574" cx="206.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
-    <ellipse carstartpos id="svg_26" ry="5" rx="11" cy="389.928574" cx="169.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
+    <ellipse  carstartpos ry="5" rx="11" id="svg_22" cy="434.000031" cx="291.285736" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
+    <ellipse  carstartpos id="svg_24" ry="5" rx="11" cy="391.928574" cx="249.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
+    <ellipse  carstartpos id="svg_25" ry="5" rx="11" cy="435.928574" cx="206.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
+    <ellipse  carstartpos id="svg_26" ry="5" rx="11" cy="389.928574" cx="169.928572" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="none"/>
   </g>
 </svg>
