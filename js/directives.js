@@ -246,7 +246,7 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
         },
         template: '<div>' +
                     '<div>lap:{{lap}}. last:{{lastLapTime}}s. best:{{bestLapTime}}</div>' +
-                    '<div ng-repeat="checkpointtime in checkpointtimes">' +
+                    '<div ng-repeat="checkpointtime in checkpointtimes2">' +
                         '<div>{{checkpointtime}}</div>' +
                     '</div>' +
                   '</div>',
@@ -276,6 +276,20 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
             aggregated.subscribe(function (elapsedTime) {
                 scope.lastLapTime = elapsedTime / 1000;
                 scope.checkpointtimes = [];
+                scope.$apply();
+            });
+
+            var bestLapTime = aggregated.scan(0, function (acc, lapTime) {
+                if (lapTime < acc || acc === 0) {
+                    return lapTime;
+                } else {
+                    console.log('not better time:' + lapTime + ',vs. ' + acc);
+                    return acc;
+                }
+            });
+
+            bestLapTime.subscribe(function (bestLapTime) {
+                scope.bestLapTime = bestLapTime;
                 scope.$apply();
             });
         }
