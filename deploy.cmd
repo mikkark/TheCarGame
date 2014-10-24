@@ -85,6 +85,8 @@ goto :EOF
 :: Deployment
 :: ----------
 
+:Deployment
+
 ECHO 1. Select node version
 call :SelectNodeVersion
 
