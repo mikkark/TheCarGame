@@ -88,14 +88,18 @@ goto :EOF
 :Deployment
 echo Handling node.js deployment.
 
-# Install bower packages
+:: Install bower packages
   call npm install bower
   IF !ERRORLEVEL! NEQ 0 goto error
 
   ./node_modules/.bin/bower install rxjs
-  ./node_modules/.bin/bower install angular
-  ./node_modules/.bin/bower install angular-rx
+    IF !ERRORLEVEL! NEQ 0 goto error
 
+  ./node_modules/.bin/bower install angular
+    IF !ERRORLEVEL! NEQ 0 goto error
+
+  ./node_modules/.bin/bower install angular-rx
+  IF !ERRORLEVEL! NEQ 0 goto error
 
 :: 1. KuduSync
 IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
