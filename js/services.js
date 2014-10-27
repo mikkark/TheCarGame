@@ -4,8 +4,10 @@ app.factory('checkpointService', function () {
 
         var service = this;
 
+        service.numberOfCheckpoints = 0;
+
         service.getNextCheckpoint = function (currCheckpoint) {
-            if (currCheckpoint.id === 4) {
+            if (currCheckpoint.id === service.numberOfCheckpoints) {
                 return service.checkpointCtrlsById[1];
             } else {
                 return service.checkpointCtrlsById[currCheckpoint.id + 1];
@@ -22,6 +24,7 @@ app.factory('checkpointService', function () {
 
         service.registerCheckpoint = function (checkpointCtrl) {
             service.checkpointCtrlsById[checkpointCtrl.checkpoint.id] = checkpointCtrl;
+            service.numberOfCheckpoints = service.numberOfCheckpoints + 1;
         };
 
         service.checkpointReached = function (checkpointController, car) {
@@ -29,7 +32,7 @@ app.factory('checkpointService', function () {
 
             service.lapSubject.onNext({name: car.name, id: checkpointController.checkpoint.id});
 
-            if (checkpointController.checkpoint.id === 4) {
+            if (checkpointController.checkpoint.id === service.numberOfCheckpoints) {
                 service.lapSubject.onNext({name: car.name, id: 0});
             }
         };

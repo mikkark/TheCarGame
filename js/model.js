@@ -8,7 +8,7 @@ createModel = function () {
     model.MAX_GEARS = 6;
     model.STEERING_SAMPLING_RATE = 10;
     model.MOVING_RATE = 1;
-    model.UNIT_OF_MOVEMENT = 2; //pixels per 15ms
+    model.UNIT_OF_MOVEMENT = 1; //pixels per 15ms
     model.GAS_PEDAL_SAMPLING_RATE = 15;
     model.CHECKPOINT_CHECK_RATE = 100;
 
@@ -20,6 +20,8 @@ createModel = function () {
         this.speed = 0;
         this.engine = engine;
         this.steering = new Steering(1);
+        this.minX = 0;
+        this.minY = 0;
     }
 
     Car.prototype.accelerate = function () {

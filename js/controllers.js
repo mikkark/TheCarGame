@@ -14,6 +14,8 @@ app.controller('main', ['$scope', 'checkpointService', function($scope, checkpoi
 
     var ferrari = new model.Car('ferrari', keys2, ferrariEngine);
     ferrari.steering = new model.Steering(3);
+    ferrari.minX = -20;
+    ferrari.minY = -40;
 
     var cars = [
         ferrari,

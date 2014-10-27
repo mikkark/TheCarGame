@@ -4,7 +4,7 @@ app.directive('track', function () {
     return {
         templateNamespace: 'svg',
         //template: '<svg height="800" style="display: inline-block" width="60%" ng-transclude></svg>',
-        templateUrl: './html/track1.html',
+        templateUrl: './html/track2.html',
         restrict: 'E',
         replace: true,
         transclude: true
@@ -232,7 +232,7 @@ app.directive('carstartpos', function () {
         restrict: 'A',
         replace: true,
         link: function (scope, element) {
-            element.hide();
+           // element.hide();
         }
     };
 });
@@ -255,7 +255,7 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
             scope.checkpointtimes = [];
 
             var myStream = checkpointService.lapPubSubject.filter(function (item) { return item.name === scope.carname || item.name === 'raceStart'});
-            var finishLine = myStream.filter(function (item) { return item.id === 4; });
+            var finishLine = myStream.filter(function (item) { return item.id === checkpointService.numberOfCheckpoints; });
 
             finishLine.subscribe(function () {
                 scope.lap = scope.lap + 1;
@@ -264,7 +264,7 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
             var aggregated = myStream.takeUntil(finishLine).aggregate(0, function(acc, data) {
                 if (acc === 0) {
                     return data.time;
-                } else if (data.id === 4) {
+                } else if (data.id === checkpointService.numberOfCheckpoints) {
                     return data.time - acc;
                 }
                 else {
