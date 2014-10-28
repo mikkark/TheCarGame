@@ -22,7 +22,7 @@ app.directive('powermeter', function () {
 
 app.directive('speedometer', function () {
     return {
-        template: '<div>speed:{{car.engine.currentPresumedSpeed}}, actual:{{car.actualSpeed}}</div>',
+        template: '<div>speed:{{car.currentPresumedSpeed}}, actual:{{car.actualSpeed}}</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -44,6 +44,16 @@ app.directive('steering', function () {
         restrict: 'E',
         transclude: true,
         replace: true
+    };
+});
+
+app.directive('startlights', function () {
+    return {
+        templateUrl: './html/startlights.html',
+        restrict: 'E',
+        replace: true,
+        transclude: true,
+        controller: 'startlightscontroller'
     };
 });
 
@@ -86,7 +96,7 @@ app.directive('car', function () {
                 .selectMany(function () {
                     return Rx.Observable.interval(0, model.GAS_PEDAL_SAMPLING_RATE)
                         .takeUntil(keyup.filter(gasKeyFilter))
-                        .takeWhile(function () { return scope.car.engine.currentPresumedSpeed < scope.car.engine.maxSpeed; });
+                        .takeWhile(function () { return scope.car.currentPresumedSpeed < scope.car.maxspeed; });
                 })
                 .repeat()
                 .subscribe(function () {
@@ -146,7 +156,7 @@ app.directive('car', function () {
     };
 });
 
-app.directive('movingobject', ['observeOnScope', function(observeOnScope) {
+app.directive('movingobject', ['observeOnScope', 'raceService', function(observeOnScope, raceService) {
 
     var moveToStartPos = function (car, movingElement) {
         var freeStartPos = $('[carstartpos=""]').first();
@@ -169,12 +179,12 @@ app.directive('movingobject', ['observeOnScope', function(observeOnScope) {
             scope.car.direction = 0;
             scope.car.timestamp = 0;
 
-            var revs = observeOnScope(scope, 'car.engine.currentPresumedSpeed')
+            var revs = observeOnScope(scope, 'car.engine.revs')
                 .filter(function (revs) { return revs.newValue > 0; })
                 .take(1)
                 .selectMany(function () {
-                    return Rx.Observable.interval(model.MOVING_RATE).select(function () { return scope.car.engine.currentPresumedSpeed; })
-                        .takeWhile(function () { return scope.car.engine.currentPresumedSpeed > 0; });
+                    return Rx.Observable.interval(model.MOVING_RATE)
+                        .takeWhile(function () { return raceService.isRaceOn() && scope.car.engine.revs > 0; });
                 })
                 .repeat();
 
@@ -210,6 +220,7 @@ app.directive('movingobject', ['observeOnScope', function(observeOnScope) {
 
                 var dist = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
 
+                scope.car.setCurrentSpeed();
                 scope.car.actualSpeed = dist / model.MOVING_RATE;
             };
 

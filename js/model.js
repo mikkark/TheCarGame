@@ -12,7 +12,7 @@ createModel = function () {
     model.GAS_PEDAL_SAMPLING_RATE = 15;
     model.CHECKPOINT_CHECK_RATE = 100;
 
-    function Car(name, keys, engine) {
+    function Car(name, keys, engine, maxspeed) {
         this.name = name;
         this.gas = keys.gas;
         this.left = keys.left;
@@ -20,8 +20,8 @@ createModel = function () {
         this.speed = 0;
         this.engine = engine;
         this.steering = new Steering(1);
-        this.minX = 0;
-        this.minY = 0;
+        this.maxspeed = maxspeed;
+        this.currentPresumedSpeed = 0;
     }
 
     Car.prototype.accelerate = function () {
@@ -30,16 +30,19 @@ createModel = function () {
 
     Car.prototype.break = function () {
         this.engine.revsDown();
+        this.currentPresumedSpeed = 0;
     };
 
-    function Engine(enginetype, maxRevs, revMap, maxSpeed) {
+    Car.prototype.setCurrentSpeed = function () {
+        this.currentPresumedSpeed = Math.round((this.maxspeed / model.MAX_GEARS) * this.engine.gear * (this.engine.revs / this.engine.maxRevs));
+    };
+
+    function Engine(enginetype, maxRevs, revMap) {
         this.engineType = enginetype;
         this.maxRevs = maxRevs;
         this.revMap = revMap;
         this.revs = 0;
         this.gear = 1;
-        this.maxSpeed = maxSpeed;
-        this.currentPresumedSpeed = 0;
     }
 
     addRevs = function (engine) {
@@ -50,18 +53,14 @@ createModel = function () {
         if (this.revs < this.maxRevs) {
             addRevs(this);
         } else if (this.gear < model.MAX_GEARS) {
-            this.gear += 1;
-
+            this.gear = this.gear + 1;
             this.revs = this.revs - (this.maxRevs * 0.5);
         }
-
-        this.currentPresumedSpeed = Math.round((this.maxSpeed / model.MAX_GEARS) * this.gear * (this.revs / this.maxRevs));
     };
 
     Engine.prototype.revsDown = function () {
         this.revs = 0;
         this.gear = 1;
-        this.currentPresumedSpeed = 0;
     };
 
     function Steering(turn) {

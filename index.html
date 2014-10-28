@@ -41,7 +41,6 @@
             <p>This is a very rudimentary slicks'n'slide clone type of a car game.</p>
 
             <div style="display: inline-block;margin-right:5px;width: 30%;vertical-align: top">
-                <input type="button" value="Start race" ng-click="start()" style="display: inline-block;"/>
                 <div id="carControls" ng-repeat="car in cars">
                     <div style="display: inline-block;width: 40%;vertical-align: top">
                         <input type="text" ng-model="car.name "/>
@@ -57,6 +56,7 @@
             <svg width="800" height="600" transform="scale ( 1.2 )">
                 <track ng-cloak id="track"  style="border: 5px solid;" />
                 <car movingobject ng-repeat="car in cars"></car>
+                <startlights x="200" y="130" transform="scale ( 0.8 )"></startlights>
             </svg>
         </div>
 

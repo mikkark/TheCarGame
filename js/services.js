@@ -47,3 +47,20 @@ app.factory('checkpointService', function () {
 
     return lapCounterService();
 });
+
+app.factory('raceService', ['checkpointService', function (checkpointService) {
+    var service = {};
+
+    var isRaceOn = false;
+
+    service.startRace = function () {
+        checkpointService.start();
+        isRaceOn = true;
+    };
+
+    service.isRaceOn = function () {
+        return isRaceOn;
+    };
+
+    return service;
+}]);

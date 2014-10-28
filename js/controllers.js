@@ -1,39 +1,34 @@
 'use strict'
 
-app.controller('main', ['$scope', 'checkpointService', function($scope, checkpointService) {
+app.controller('main', ['$scope', 'checkpointService', function ($scope, checkpointService) {
 
-    var ferrariEngine = new model.Engine('ferrari', 15000, 0.5, 320);
-    var skodaEngine = new model.Engine('skoda', 6500, 0.2, 180);
-    var tractorEngine = new model.Engine('tractor', 5000, 0.5, 60);
-    var truckEngine = new model.Engine('truck', 7000, 0.15, 80);
+    var ferrariEngine = new model.Engine('ferrari', 15000, 0.5);
+    var skodaEngine = new model.Engine('skoda', 6500, 0.2);
+    var tractorEngine = new model.Engine('tractor', 5000, 0.5);
+    var truckEngine = new model.Engine('truck', 7000, 0.15);
 
     var keys1 = { gas: "w", left: "a", right: "d" };
     var keys2 = { gas: "y", left: "g", right: "j" };
     var keys3 = { gas: "f", left: "x", right: "v" };
     var keys4 = { gas: "p", left: "l", right: "ä" };
 
-    var ferrari = new model.Car('ferrari', keys2, ferrariEngine);
+    var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320);
     ferrari.steering = new model.Steering(3);
     ferrari.minX = -20;
     ferrari.minY = -40;
 
     var cars = [
         ferrari,
-        new model.Car('tractor', keys1, tractorEngine),
-        new model.Car('truck', keys3, truckEngine),
-        new model.Car('skoda rs', keys4, skodaEngine)
+        new model.Car('tractor', keys1, tractorEngine, 60),
+        new model.Car('truck', keys3, truckEngine, 80),
+        new model.Car('skoda rs', keys4, skodaEngine, 180)
     ];
 
     $scope.cars = cars;
-
-    $scope.start = function () {
-        checkpointService.start();
-    };
 }]);
 
-app.controller('cpController', ['$scope', '$element', 'checkpointService', function($scope, $element, checkpointService) {
+app.controller('cpController', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
 
-    var checkpoint;
     var currController = this;
 
     var getLineIntersection = function (p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y) {
@@ -82,4 +77,22 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
     }
 
     checkpointService.registerCheckpoint(currController);
+}]);
+
+app.controller('startlightscontroller', ['$scope', '$element', 'raceService', function ($scope, $element, raceService) {
+    $scope.litupLights = 0;
+
+    $scope.startLights = function () {
+
+        if ($scope.litupLights > 0) { return; }
+
+        Rx.Observable.timer(0, 1000).take(4).subscribe(function () {
+            $scope.litupLights = $scope.litupLights + 1;
+            if ($scope.litupLights > 3) {
+                $scope.litupLights = 0;
+                raceService.startRace();
+            }
+            $scope.$apply();
+        });
+    };
 }]);
