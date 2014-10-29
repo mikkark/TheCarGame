@@ -31,7 +31,7 @@ app.directive('speedometer', function () {
 
 app.directive('gearbox', function () {
     return {
-        template: '<div>gear:{{car.engine.gear}}</div>',
+        template: '<div>gear:{{car.gearbox.currentGear}} (gear up: {{car.gearUp}})</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -90,6 +90,15 @@ app.directive('car', function () {
             var steerRightFilter = function (kbevent) {
                 return kbevent.key === car.right;
             };
+            var gearUpFilter = function (kbevent) {
+                return kbevent.key === car.gearUp;
+            };
+
+            //TODO: I haven't modeled the entire gearbox yet, so I just want one gear-up (= up from N) in the game.
+            keydown.filter(gearUpFilter).take(1).subscribe(function () {
+                car.changeUp();
+                scope.$apply();
+            });
 
             keydown.filter(gasKeyFilter)
                 .take(1)
@@ -184,7 +193,9 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
                 .take(1)
                 .selectMany(function () {
                     return Rx.Observable.interval(model.MOVING_RATE)
-                        .takeWhile(function () { return raceService.isRaceOn() && scope.car.engine.revs > 0; });
+                        .takeWhile(function () { return raceService.isRaceOn() &&
+                                                        scope.car.gearbox.currentGear > 0 &&
+                                                        scope.car.engine.revs > 0; });
                 })
                 .repeat();
 
@@ -192,7 +203,7 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
                 return angle * (Math.PI / 180);
             };
 
-            var subscriptionFn = function (timestampedValue) {
+            revs.timestamp().subscribe(function (timestampedValue) {
                 var newAngle = scope.car.direction;
 
                 if (timestampedValue.timestamp - scope.car.timestamp > model.STEERING_SAMPLING_RATE) {
@@ -222,9 +233,7 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
 
                 scope.car.setCurrentSpeed();
                 scope.car.actualSpeed = dist / model.MOVING_RATE;
-            };
-
-            revs.timestamp().subscribe(subscriptionFn);
+            });
         }
     };
 }]);

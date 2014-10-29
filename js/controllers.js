@@ -7,10 +7,10 @@ app.controller('main', ['$scope', 'checkpointService', function ($scope, checkpo
     var tractorEngine = new model.Engine('tractor', 5000, 0.5);
     var truckEngine = new model.Engine('truck', 7000, 0.15);
 
-    var keys1 = { gas: "w", left: "a", right: "d" };
-    var keys2 = { gas: "y", left: "g", right: "j" };
-    var keys3 = { gas: "f", left: "x", right: "v" };
-    var keys4 = { gas: "p", left: "l", right: "ä" };
+    var keys1 = { gas: "w", left: "a", right: "d", gearUp: 'q' };
+    var keys2 = { gas: "y", left: "g", right: "j", gearUp: 't' };
+    var keys3 = { gas: "f", left: "x", right: "v", gearUp: 'z' };
+    var keys4 = { gas: "p", left: "l", right: "ä", gearUp: 'o' };
 
     var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320);
     ferrari.steering = new model.Steering(3);
