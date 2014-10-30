@@ -2,7 +2,6 @@ var createModel;
 createModel = function () {
     'use strict';
 
-    var addRevs;
     var model = {};
 
     model.MAX_GEARS = 6;
@@ -14,10 +13,7 @@ createModel = function () {
 
     function Car(name, keys, engine, maxspeed) {
         this.name = name;
-        this.gas = keys.gas;
-        this.left = keys.left;
-        this.right = keys.right;
-        this.gearUp = keys.gearUp;
+        this.keys = keys;
         this.speed = 0;
         this.engine = engine;
         this.steering = new Steering(1);
@@ -37,7 +33,9 @@ createModel = function () {
 
     Car.prototype.break = function () {
         this.engine.revsDown();
-        this.gearbox.currentGear = 1;
+        if (this.gearbox.currentGear > 0) {
+            this.gearbox.currentGear = 1;
+        }
         this.currentPresumedSpeed = 0;
     };
 

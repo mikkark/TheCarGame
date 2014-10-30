@@ -31,7 +31,7 @@ app.directive('speedometer', function () {
 
 app.directive('gearbox', function () {
     return {
-        template: '<div>gear:{{car.gearbox.currentGear}} (gear up: {{car.gearUp}})</div>',
+        template: '<div>gear:{{car.gearbox.currentGear}} (gear up: {{car.keys.gearUpString}})</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -82,16 +82,16 @@ app.directive('car', function () {
             var keydown = Rx.Observable.fromEvent(document, 'keydown');
 
             var gasKeyFilter = function (kbevent) {
-                return kbevent.key === car.gas;
+                return kbevent.which === car.keys.gas;
             };
             var steerLeftFilter = function (kbevent) {
-                return kbevent.key === car.left;
+                return kbevent.which === car.keys.left;
             };
             var steerRightFilter = function (kbevent) {
-                return kbevent.key === car.right;
+                return kbevent.which === car.keys.right;
             };
             var gearUpFilter = function (kbevent) {
-                return kbevent.key === car.gearUp;
+                return kbevent.which === car.keys.gearUp;
             };
 
             //TODO: I haven't modeled the entire gearbox yet, so I just want one gear-up (= up from N) in the game.

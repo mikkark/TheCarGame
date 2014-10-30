@@ -7,15 +7,13 @@ app.controller('main', ['$scope', 'checkpointService', function ($scope, checkpo
     var tractorEngine = new model.Engine('tractor', 5000, 0.5);
     var truckEngine = new model.Engine('truck', 7000, 0.15);
 
-    var keys1 = { gas: "w", left: "a", right: "d", gearUp: 'q' };
-    var keys2 = { gas: "y", left: "g", right: "j", gearUp: 't' };
-    var keys3 = { gas: "f", left: "x", right: "v", gearUp: 'z' };
-    var keys4 = { gas: "p", left: "l", right: "ä", gearUp: 'o' };
+    var keys1 = { gas: 87, left: 65, right: 68, gearUp: 81, gearUpString: String.fromCharCode(81) };
+    var keys2 = { gas: 89, left: 71, right: 74, gearUp: 84, gearUpString: String.fromCharCode(84) };
+    var keys3 = { gas: 70, left: 88, right: 86, gearUp: 90, gearUpString: String.fromCharCode(90) };
+    var keys4 = { gas: 104, left: 100, right: 102, gearUp: 103, gearUpString: String.fromCharCode(103) };
 
     var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320);
     ferrari.steering = new model.Steering(3);
-    ferrari.minX = -20;
-    ferrari.minY = -40;
 
     var cars = [
         ferrari,
@@ -54,7 +52,6 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
         var intersect = getLineIntersection(carPrevX, carPrevY, carNewX, carNewY, currController.checkpoint.x1, currController.checkpoint.y1, currController.checkpoint.x2, currController.checkpoint.y2);
 
         if (intersect) {
-            console.log('intersection: id ' + currController.checkpoint.id);
             checkpointService.checkpointReached(currController, car);
         }
 
