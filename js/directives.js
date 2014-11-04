@@ -22,7 +22,7 @@ app.directive('powermeter', function () {
 
 app.directive('speedometer', function () {
     return {
-        template: '<div>speed:{{car.currentPresumedSpeed}}, actual:{{car.actualSpeed}}</div>',
+        template: '<div>speed:{{car.currentPresumedSpeed}}</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -40,7 +40,7 @@ app.directive('gearbox', function () {
 
 app.directive('steering', function () {
     return {
-        template: '<div>angle:{{car.steering.angle}}</div>',
+        template: '<div>angle:{{car.steering.angle.toFixed(4)}}</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -60,14 +60,20 @@ app.directive('startlights', function () {
 app.directive('car', function () {
     return {
         templateNamespace: 'svg',
-        templateUrl: './html/carTemplate.html',
         restrict: 'E',
         replace: true,
-        transclude: true,
+        template: '<svg viewBox="-20 -30 1200 900" ng-include="getTemplate(car.name)"></svg>',
         link: function (scope, element) {
 
+            scope.getTemplate = function (name) {
+                if (name === 'ferrari') {
+                    return './html/carTemplate.html';
+                } else {
+                    return './html/carTemplate2.html';
+                }
+            };
+
             var car = scope.car;
-            car.accelerationTimestamp = 0;
 
             var right = $('#rightFront', element);
             var left = $('#leftFront', element);
@@ -165,7 +171,7 @@ app.directive('car', function () {
     };
 });
 
-app.directive('movingobject', ['observeOnScope', 'raceService', function(observeOnScope, raceService) {
+app.directive('movingobject', ['observeOnScope', 'checkpointService', function(observeOnScope, checkpointService) {
 
     var moveToStartPos = function (car, movingElement) {
         var freeStartPos = $('[carstartpos=""]').first();
@@ -176,12 +182,23 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
         movingElement.carCenterX = Number(carMainRect.attr('x')) + (Number(carMainRect.attr('width')) / 2);
         movingElement.carCenterY = Number(carMainRect.attr('y')) + (Number(carMainRect.attr('height')) / 2);
 
-        movingElement.attr('x', Number(freeStartPos.attr('cx')) - movingElement.carCenterX);
-        movingElement.attr('y', Number(freeStartPos.attr('cy')) - movingElement.carCenterY);
+        var newX = Number(freeStartPos.attr('cx')) - movingElement.carCenterX;
+        var newY = Number(freeStartPos.attr('cy')) - movingElement.carCenterY;
+
+        //These are dynamically added helper properties. With these I don't need to parse the current value
+        //when I change the transform value.
+        car.X = newX;
+        car.Y = newY;
+
+        movingElement.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
+
+        console.log('transforming');
     };
 
     return {
         link: function (scope, element) {
+
+            var currX, currY, newX, newY, newAngle;
 
             moveToStartPos(scope.car, element);
 
@@ -193,7 +210,7 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
                 .take(1)
                 .selectMany(function () {
                     return Rx.Observable.interval(model.MOVING_RATE)
-                        .takeWhile(function () { return raceService.isRaceOn() &&
+                        .takeWhile(function () { return checkpointService.isRaceOn() &&
                                                         scope.car.gearbox.currentGear > 0 &&
                                                         scope.car.engine.revs > 0; });
                 })
@@ -203,36 +220,32 @@ app.directive('movingobject', ['observeOnScope', 'raceService', function(observe
                 return angle * (Math.PI / 180);
             };
 
-            revs.timestamp().subscribe(function (timestampedValue) {
-                var newAngle = scope.car.direction;
+            revs.sample(model.STEERING_SAMPLING_RATE).subscribe(function () {
+                newAngle = scope.car.direction + scope.car.steering.angle;
 
-                if (timestampedValue.timestamp - scope.car.timestamp > model.STEERING_SAMPLING_RATE) {
-                    newAngle += scope.car.steering.angle;
+                if (newAngle > 360) { newAngle = newAngle - 360; }
+                if (newAngle < -360) { newAngle = newAngle + 360; }
 
-                    if (newAngle > 360) { newAngle = newAngle - 360; }
-                    if (newAngle < -360) { newAngle = newAngle + 360; }
+                scope.car.direction = newAngle;
+            });
 
-                    scope.car.direction = newAngle;
-                    scope.car.timestamp = timestampedValue.timestamp;
+            revs.subscribe(function () {
+                currX = scope.car.X;
+                currY = scope.car.Y;
 
-                    scope.$apply();
-                }
+                newY = (Math.sin(toRadians(scope.car.direction)) * model.UNIT_OF_MOVEMENT) + currY;
+                newX = (Math.cos(toRadians(scope.car.direction)) * model.UNIT_OF_MOVEMENT) + currX;
 
-                var currX = Number(element.attr('x'));
-                var currY = Number(element.attr('y'));
+                element.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
 
-                var newY = (Math.sin(toRadians(newAngle)) * model.UNIT_OF_MOVEMENT) + currY;
-                var newX = (Math.cos(toRadians(newAngle)) * model.UNIT_OF_MOVEMENT) + currX;
-
-                element.attr('x', newX);
-                element.attr('y', newY);
+                scope.car.X = newX;
+                scope.car.Y = newY;
 
                 scope.car.nextCheckpointCtrl.checkIfCheckpointCrossed(scope.car, currX, currY, newX, newY);
 
-                var dist = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
-
                 scope.car.setCurrentSpeed();
-                scope.car.actualSpeed = dist / model.MOVING_RATE;
+
+                scope.$apply();
             });
         }
     };
@@ -252,7 +265,7 @@ app.directive('carstartpos', function () {
         restrict: 'A',
         replace: true,
         link: function (scope, element) {
-           // element.hide();
+            element.hide();
         }
     };
 });
@@ -274,8 +287,15 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
             scope.lap = 1;
             scope.checkpointtimes = [];
 
-            var myStream = checkpointService.lapPubSubject.filter(function (item) { return item.name === scope.carname || item.name === 'raceStart'});
-            var finishLine = myStream.filter(function (item) { return item.id === checkpointService.numberOfCheckpoints; });
+            var stillLapsToGo = function () {
+                return scope.lap <= checkpointService.numberOfLaps;
+            };
+
+            var myStream = checkpointService.lapPubSubject
+                .filter(function (item) { return item.name === scope.carname || item.name === 'raceStart'})
+                .takeWhile(stillLapsToGo);
+            var finishLine = myStream
+                .filter(function (item) { return item.id === checkpointService.numberOfCheckpoints; });
 
             finishLine.subscribe(function () {
                 scope.lap = scope.lap + 1;
@@ -298,12 +318,12 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
             aggregated.subscribe(function (elapsedTime) {
                 scope.lastLapTime = elapsedTime / 1000;
                 scope.checkpointtimes = [];
-                scope.$apply();
 
                 lapSubject.onNext(elapsedTime);
             });
 
-            var bestLapTime = lapSubject.scan(0, function (acc, lapTime) {
+            //Stop scanning when laps are up, otherwise we would get a zero here that would reset the best time.
+            var bestLapTime = lapSubject.takeWhile(stillLapsToGo).scan(0, function (acc, lapTime) {
                 if (lapTime < acc || acc === 0) {
                     return lapTime;
                 } else {

@@ -12,17 +12,22 @@ app.controller('main', ['$scope', 'checkpointService', function ($scope, checkpo
     var keys3 = { gas: 70, left: 88, right: 86, gearUp: 90, gearUpString: String.fromCharCode(90) };
     var keys4 = { gas: 104, left: 100, right: 102, gearUp: 103, gearUpString: String.fromCharCode(103) };
 
-    var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320);
+    var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320, 1);
     ferrari.steering = new model.Steering(3);
 
     var cars = [
         ferrari,
-        new model.Car('tractor', keys1, tractorEngine, 60),
-        new model.Car('truck', keys3, truckEngine, 80),
-        new model.Car('skoda rs', keys4, skodaEngine, 180)
+        new model.Car('tractor', keys1, tractorEngine, 60, 2),
+        new model.Car('truck', keys3, truckEngine, 80, 3),
+        new model.Car('skoda rs', keys4, skodaEngine, 180, 4)
     ];
 
     $scope.cars = cars;
+    $scope.numberOfLaps = checkpointService.numberOfLaps = 3;
+
+    $scope.numberOfLapsChanged = function () {
+        checkpointService.numberOfLaps = $scope.numberOfLaps;
+    };
 }]);
 
 app.controller('cpController', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
@@ -76,7 +81,7 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
     checkpointService.registerCheckpoint(currController);
 }]);
 
-app.controller('startlightscontroller', ['$scope', '$element', 'raceService', function ($scope, $element, raceService) {
+app.controller('startlightscontroller', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
     $scope.litupLights = 0;
 
     $scope.startLights = function () {
@@ -87,7 +92,7 @@ app.controller('startlightscontroller', ['$scope', '$element', 'raceService', fu
             $scope.litupLights = $scope.litupLights + 1;
             if ($scope.litupLights > 3) {
                 $scope.litupLights = 0;
-                raceService.startRace();
+                checkpointService.start();
             }
             $scope.$apply();
         });

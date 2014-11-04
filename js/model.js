@@ -5,14 +5,15 @@ createModel = function () {
     var model = {};
 
     model.MAX_GEARS = 6;
-    model.STEERING_SAMPLING_RATE = 10;
+    model.STEERING_SAMPLING_RATE = 20;
     model.MOVING_RATE = 1;
     model.UNIT_OF_MOVEMENT = 1; //pixels per 15ms
     model.GAS_PEDAL_SAMPLING_RATE = 15;
     model.CHECKPOINT_CHECK_RATE = 100;
 
-    function Car(name, keys, engine, maxspeed) {
+    function Car(name, keys, engine, maxspeed, carNumber) {
         this.name = name;
+        this.carNumber = carNumber;
         this.keys = keys;
         this.speed = 0;
         this.engine = engine;

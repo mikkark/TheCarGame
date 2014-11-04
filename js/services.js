@@ -1,10 +1,16 @@
 app.factory('checkpointService', function () {
 
-    var lapCounterService = function () {
+    var checkpointService = function () {
 
         var service = this;
+        var isRaceOn = false;
+
+        service.isRaceOn = function () {
+            return isRaceOn;
+        };
 
         service.numberOfCheckpoints = 0;
+        service.numberOfLaps = 0;
 
         service.getNextCheckpoint = function (currCheckpoint) {
             if (currCheckpoint.id === service.numberOfCheckpoints) {
@@ -38,6 +44,7 @@ app.factory('checkpointService', function () {
         };
 
         service.start = function () {
+            isRaceOn = true;
             service.lapSubject.onNext({name: 'raceStart'});
         };
 
@@ -45,22 +52,5 @@ app.factory('checkpointService', function () {
 
     };
 
-    return lapCounterService();
+    return checkpointService();
 });
-
-app.factory('raceService', ['checkpointService', function (checkpointService) {
-    var service = {};
-
-    var isRaceOn = false;
-
-    service.startRace = function () {
-        checkpointService.start();
-        isRaceOn = true;
-    };
-
-    service.isRaceOn = function () {
-        return isRaceOn;
-    };
-
-    return service;
-}]);
