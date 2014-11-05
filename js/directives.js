@@ -62,8 +62,10 @@ app.directive('car', function () {
         templateNamespace: 'svg',
         restrict: 'E',
         replace: true,
-        template: '<svg viewBox="-20 -30 1200 900" ng-include="getTemplate(car.name)"></svg>',
+        template: '<svg viewBox="-20 -30 1200 900" ng-include="getTemplate(car.name)" onload="htmlLoaded()"></svg>',
         link: function (scope, element) {
+
+            var car = scope.car;
 
             scope.getTemplate = function (name) {
                 if (name === 'ferrari') {
@@ -73,16 +75,16 @@ app.directive('car', function () {
                 }
             };
 
-            var car = scope.car;
+            scope.htmlLoaded = function () {
+                var right = $('#rightFront', element[0].nextSibling);
+                var left = $('#leftFront', element[0].nextSibling);
 
-            var right = $('#rightFront', element);
-            var left = $('#leftFront', element);
+                car.rightTyreCenterY = Number(right.attr('y1')) + ((Number(right.attr('y2')) - Number(right.attr('y1'))) / 2);
+                car.rightTyreCenterX = Number(right.attr('x1')) + ((Number(right.attr('x2')) - Number(right.attr('x1'))) / 2);
 
-            car.rightTyreCenterY = Number(right.attr('y1')) + ((Number(right.attr('y2')) - Number(right.attr('y1'))) / 2);
-            car.rightTyreCenterX = Number(right.attr('x1')) + ((Number(right.attr('x2')) - Number(right.attr('x1'))) / 2);
-
-            car.leftTyreCenterY = Number(left.attr('y1')) + ((Number(left.attr('y2')) - Number(left.attr('y1'))) / 2);
-            car.leftTyreCenterX = Number(left.attr('x1')) + ((Number(left.attr('x2')) - Number(left.attr('x1'))) / 2);
+                car.leftTyreCenterY = Number(left.attr('y1')) + ((Number(left.attr('y2')) - Number(left.attr('y1'))) / 2);
+                car.leftTyreCenterX = Number(left.attr('x1')) + ((Number(left.attr('x2')) - Number(left.attr('x1'))) / 2);
+            };
 
             var keyup = Rx.Observable.fromEvent(document, 'keyup');
             var keydown = Rx.Observable.fromEvent(document, 'keydown');
