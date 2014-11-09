@@ -90,14 +90,12 @@ goto :EOF
 ECHO 1. Select node version
 call :SelectNodeVersion
 
-ECHO 2. Install bower packages
+ECHO 2. Install npm and bower packages
 
-call !NPM_CMD! install bower
+call !NPM_CMD! install
 IF !ERRORLEVEL! NEQ 0 goto error
 
-call .\node_modules\.bin\bower install rxjs
-call .\node_modules\.bin\bower install angular
-call .\node_modules\.bin\bower install angular-rx
+call .\node_modules\.bin\bower install
 IF !ERRORLEVEL! NEQ 0 goto error
 
 :: 1. KuduSync
