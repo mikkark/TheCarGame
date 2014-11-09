@@ -6,8 +6,8 @@ createModel = function () {
 
     model.MAX_GEARS = 6;
     model.STEERING_SAMPLING_RATE = 20;
-    model.MOVING_RATE = 1;
-    model.UNIT_OF_MOVEMENT = 1; //pixels per 15ms
+    model.MOVING_RATE = 15;
+    model.UNIT_OF_MOVEMENT = 3; //pixels per 15ms
     model.GAS_PEDAL_SAMPLING_RATE = 15;
     model.CHECKPOINT_CHECK_RATE = 100;
 

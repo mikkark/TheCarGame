@@ -197,7 +197,6 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
 
     return {
         link: function (scope, element) {
-            console.log('linked');
             var currX, currY, newX, newY, newAngle;
 
             moveToStartPos(scope.car, element);
@@ -245,7 +244,19 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
 
                 scope.car.setCurrentSpeed();
 
+                if (socket) {
+                    socket.emit('carMoves', scope.car);
+                }
+
                 scope.$apply();
+            });
+
+            socket.on('carMoves', function(car) {
+                if (car.name === scope.car.name) {
+                    element.attr('transform', 'translate ( ' + car.X + ' ' + car.Y + ')');
+                    scope.car.direction = car.direction;
+                    scope.$apply();
+                }
             });
         }
     };
