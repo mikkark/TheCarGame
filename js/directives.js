@@ -193,13 +193,11 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
         car.Y = newY;
 
         movingElement.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
-
-        console.log('transforming');
     };
 
     return {
         link: function (scope, element) {
-
+            console.log('linked');
             var currX, currY, newX, newY, newAngle;
 
             moveToStartPos(scope.car, element);
@@ -213,8 +211,8 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
                 .selectMany(function () {
                     return Rx.Observable.interval(model.MOVING_RATE)
                         .takeWhile(function () { return checkpointService.isRaceOn() &&
-                                                        scope.car.gearbox.currentGear > 0 &&
-                                                        scope.car.engine.revs > 0; });
+                            scope.car.gearbox.currentGear > 0 &&
+                            scope.car.engine.revs > 0; });
                 })
                 .repeat();
 
