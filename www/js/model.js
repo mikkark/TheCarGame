@@ -4,8 +4,9 @@ createModel = function () {
 
     var model = {};
 
+    model.SYNC_RATE = 4000;
     model.MAX_GEARS = 6;
-    model.STEERING_SAMPLING_RATE = 20;
+    model.STEERING_SAMPLING_RATE = 15;
     model.MOVING_RATE = 15;
     model.UNIT_OF_MOVEMENT = 3; //pixels per 15ms
     model.GAS_PEDAL_SAMPLING_RATE = 15;
@@ -21,6 +22,7 @@ createModel = function () {
         this.maxspeed = maxspeed;
         this.currentPresumedSpeed = 0;
         this.gearbox = new Gearbox(model.MAX_GEARS);
+        this.isRemote = false;
     }
 
     Car.prototype.accelerate = function () {

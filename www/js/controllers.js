@@ -1,33 +1,102 @@
 'use strict'
 
-app.controller('main', ['$scope', 'checkpointService', function ($scope, checkpointService) {
+app.controller('main', ['$scope', 'checkpointService', 'socketService',
+    function ($scope, checkpointService, socketService) {
 
-    var ferrariEngine = new model.Engine('ferrari', 15000, 0.5);
-    var skodaEngine = new model.Engine('skoda', 6500, 0.2);
-    var tractorEngine = new model.Engine('tractor', 5000, 0.5);
-    var truckEngine = new model.Engine('truck', 7000, 0.15);
+        var socket;
+        var ferrariEngine = new model.Engine('ferrari', 15000, 0.5);
+        var skodaEngine = new model.Engine('skoda', 6500, 0.2);
+        var tractorEngine = new model.Engine('tractor', 5000, 0.5);
+        var truckEngine = new model.Engine('truck', 7000, 0.15);
 
-    var keys1 = { gas: 87, left: 65, right: 68, gearUp: 81, gearUpString: String.fromCharCode(81) };
-    var keys2 = { gas: 89, left: 71, right: 74, gearUp: 84, gearUpString: String.fromCharCode(84) };
-    var keys3 = { gas: 70, left: 88, right: 86, gearUp: 90, gearUpString: String.fromCharCode(90) };
-    var keys4 = { gas: 104, left: 100, right: 102, gearUp: 103, gearUpString: String.fromCharCode(103) };
+        var keys1 = { gas: 87, left: 65, right: 68, gearUp: 81, gearUpString: String.fromCharCode(81) };
+        var keys2 = { gas: 89, left: 71, right: 74, gearUp: 84, gearUpString: String.fromCharCode(84) };
+        var keys3 = { gas: 70, left: 88, right: 86, gearUp: 90, gearUpString: String.fromCharCode(90) };
+        var keys4 = { gas: 104, left: 100, right: 102, gearUp: 103, gearUpString: String.fromCharCode(103) };
 
-    var ferrari = new model.Car('ferrari', keys2, ferrariEngine, 320, 1);
-    ferrari.steering = new model.Steering(3);
+        var ferrari = new model.Car('ferrari' + (Math.random() * 10).toFixed(0), keys2, ferrariEngine, 320, ((Math.random() * 10) + 1).toFixed(0));
+        ferrari.steering = new model.Steering(3);
 
-    var cars = [
-        ferrari,
-        new model.Car('tractor', keys1, tractorEngine, 60, 2),
-        new model.Car('truck', keys3, truckEngine, 80, 3),
-        new model.Car('skoda rs', keys4, skodaEngine, 180, 4)
-    ];
+        var cars = [
+            ferrari//,
+            //new model.Car('tractor', keys1, tractorEngine, 60, 2),
+            //new model.Car('skoda rs', keys4, skodaEngine, 180, 3)
+        ];
 
-    $scope.cars = cars;
-    $scope.numberOfLaps = checkpointService.numberOfLaps = 3;
+        $scope.cars = cars;
+        $scope.remoteCars = [];
+        $scope.numberOfLaps = checkpointService.numberOfLaps = 3;
 
-    $scope.numberOfLapsChanged = function () {
-        checkpointService.numberOfLaps = $scope.numberOfLaps;
-    };
+        $scope.numberOfLapsChanged = function () {
+            checkpointService.numberOfLaps = $scope.numberOfLaps;
+        };
+
+        var getSocket = function () {
+            var socket = socketService.startConn();
+
+            socket.on('gameFull', function () {
+                $scope.multiplayerFull = true;
+            });
+
+            socket.on('someoneJoinedGame', function (newPlayersCars) {
+                if (newPlayersCars.length > 0) {
+                    for (var i = 0; i < newPlayersCars.length; i++) {
+                        $scope.remoteCars.push(newPlayersCars[i]);
+                    }
+                    $scope.$apply();
+                }
+            });
+
+            socket.on('otherPlayers', function (otherPlayersCars) {
+                if (otherPlayersCars.length > 0) {
+                    for (var j = 0; j < otherPlayersCars.length; j++) {
+                        for (var i = 0; i < otherPlayersCars[j].length; i++) {
+                            $scope.remoteCars.push(otherPlayersCars[j][i]);
+                        }
+                    }
+                    $scope.$apply();
+                }
+            });
+
+            socket.on('playerLeft', function (playersCars) {
+                if (playersCars.length > 0) {
+                    var i;
+                    for (var j = 0; j < playersCars.length; j++) {
+                        i = $scope.remoteCars
+                                .map(function (remoteCar) {
+                                    return remoteCar.name;
+                                })
+                                .indexOf(playersCars[j].name);
+                        $scope.remoteCars.splice(i, 1);
+                    }
+                    $scope.$apply();
+                }
+            });
+
+            return socket;
+        };
+
+        $scope.joinMultiplayer = function () {
+            if (!socket) {
+                socket = getSocket();
+            }
+
+            socket.emit('join', $scope.cars);
+
+            Rx.Observable.timer(model.SYNC_RATE, model.SYNC_RATE).subscribe(function () {
+               for (var i = 0; i < $scope.cars.length; i++) {
+                   socket.emit('syncPos', $scope.cars[i]);
+               }
+            });
+        };
+
+        $scope.spectateMultiplayer = function () {
+            if (!socket) {
+                socket = getSocket();
+            }
+
+            socket.emit('spectate');
+        };
 }]);
 
 app.controller('cpController', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {

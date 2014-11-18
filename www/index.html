@@ -32,7 +32,7 @@
         <script src="js/directives.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script type="text/javascript">
-            var socket = io();
+
         </script>
     </head>
     <body ng-app="app">
@@ -43,25 +43,29 @@
 
             <div style="display: inline-block;margin-right:5px;width: 30%;vertical-align: top">
                 <div>
+                    <input type="button" value="Join multiplayer" ng-show="!multiplayerFull" ng-click="joinMultiplayer()" />
+                    <input type="button" value="Spectate multiplayer" ng-click="spectateMultiplayer()" />
                     <label for="numberOfLaps">Number of laps</label>
                     <input id="numberOfLaps" type="number" ng-change="numberOfLapsChanged()" ng-model="numberOfLaps" />
                 </div>
                 <br />
-                <div id="carControls" ng-repeat="car in cars">
+                <div id="carControls" ng-repeat="car in allCars = cars.concat(remoteCars) track by car.name">
                     <div style="display: inline-block;width: 40%;vertical-align: top">
                         <p>{{car.name}} - number {{car.carNumber}}</p>
-                        <speedometer></speedometer>
-                        <steering></steering>
-                        <gearbox></gearbox>
+                        <p ng-show="car.isRemote">Remote car</p>
+                        <speedometer ng-show="true"></speedometer>
+                        <steering ng-show="!car.isRemote"></steering>
+                        <gearbox ng-show="!car.isRemote"></gearbox>
                     </div>
-                    <powermeter style="display: inline-block;width: 20%;vertical-align: bottom"></powermeter>
-                    <lapcount style="display: inline-block;width: 30%;vertical-align: top" carname="car.name"></lapcount>
+                    <powermeter ng-show="!car.isRemote" style="display: inline-block;width: 20%;vertical-align: bottom"></powermeter>
+                    <lapcount ng-show="!car.isRemote" style="display: inline-block;width: 30%;vertical-align: top" carname="car.name"></lapcount>
                 </div>
             </div>
 
             <svg width="800" height="600" transform="scale ( 1.2 )">
                 <track ng-cloak id="track"  style="border: 5px solid;" />
                 <car movingobject ng-repeat="car in cars"></car>
+                <remotecar moveremotely ng-repeat="car in remoteCars track by car.name"></remotecar>
                 <startlights x="200" y="130" transform="scale ( 0.8 )"></startlights>
             </svg>
         </div>

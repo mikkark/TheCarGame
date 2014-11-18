@@ -22,7 +22,7 @@ app.directive('powermeter', function () {
 
 app.directive('speedometer', function () {
     return {
-        template: '<div>speed:{{car.currentPresumedSpeed}}</div>',
+        template: '<div>speed:{{car.currentPresumedSpeed}},actual:{{car.actualSpeed}}</div>',
         restrict: 'E',
         transclude: true,
         replace: true
@@ -57,7 +57,7 @@ app.directive('startlights', function () {
     };
 });
 
-app.directive('car', function () {
+app.directive('car', ['socketService', function (socketService) {
     return {
         templateNamespace: 'svg',
         restrict: 'E',
@@ -125,7 +125,6 @@ app.directive('car', function () {
                 return kb.keyCode;
             })
                 .take(1)
-                .takeWhile(function () { return car.steering.angle > -(car.steering.maxAngle); })
                 .selectMany(function (keyCode) {
                     return Rx.Observable.interval(0, model.STEERING_SAMPLING_RATE)
                         .select(function () { return keyCode; })
@@ -143,7 +142,6 @@ app.directive('car', function () {
                 return kb.keyCode;
             })
                 .take(1)
-                .takeWhile(function () { return car.steering.angle < car.steering.maxAngle; })
                 .selectMany(function (keyCode) {
                     return Rx.Observable.interval(0, model.STEERING_SAMPLING_RATE)
                         .select(function () { return keyCode; })
@@ -168,56 +166,101 @@ app.directive('car', function () {
             keyup.filter(gasKeyFilter).subscribe(function () {
                 car.break();
                 scope.$apply();
+
+                socketService.send('carStop', { name: car.name});
             });
+        }
+    };
+}]);
+
+app.directive('remotecar', function () {
+    return {
+        templateNamespace: 'svg',
+        restrict: 'E',
+        replace: true,
+        template: '<svg viewBox="-20 -30 1200 900" ng-include="getTemplate(car.name)" onload="htmlLoaded()"></svg>',
+        link: function (scope, element) {
+
+            var car = scope.car;
+
+            scope.getTemplate = function (name) {
+                if (name === 'ferrari') {
+                    return './html/carTemplate.html';
+                } else {
+                    return './html/carTemplate2.html';
+                }
+            };
+
+            scope.htmlLoaded = function () {
+                var right = $('#rightFront', element[0].nextSibling);
+                var left = $('#leftFront', element[0].nextSibling);
+
+                car.rightTyreCenterY = Number(right.attr('y1')) + ((Number(right.attr('y2')) - Number(right.attr('y1'))) / 2);
+                car.rightTyreCenterX = Number(right.attr('x1')) + ((Number(right.attr('x2')) - Number(right.attr('x1'))) / 2);
+
+                car.leftTyreCenterY = Number(left.attr('y1')) + ((Number(left.attr('y2')) - Number(left.attr('y1'))) / 2);
+                car.leftTyreCenterX = Number(left.attr('x1')) + ((Number(left.attr('x2')) - Number(left.attr('x1'))) / 2);
+            };
         }
     };
 });
 
-app.directive('movingobject', ['observeOnScope', 'checkpointService', function(observeOnScope, checkpointService) {
+var toRadians = function (angle) {
+    return angle * (Math.PI / 180);
+};
 
-    var moveToStartPos = function (car, movingElement) {
-        var freeStartPos = $('[carstartpos=""]').first();
+var moveToStartPos = function (car, movingElement) {
+    var freeStartPos = $('[carstartpos=""]').first();
 
-        freeStartPos.attr('carstartpos', car.name);
+    freeStartPos.attr('carstartpos', car.name);
 
-        var carMainRect = $('.carMainRect', movingElement);
-        movingElement.carCenterX = Number(carMainRect.attr('x')) + (Number(carMainRect.attr('width')) / 2);
-        movingElement.carCenterY = Number(carMainRect.attr('y')) + (Number(carMainRect.attr('height')) / 2);
+    var carMainRect = $('.carMainRect', movingElement);
+    movingElement.carCenterX = Number(carMainRect.attr('x')) + (Number(carMainRect.attr('width')) / 2);
+    movingElement.carCenterY = Number(carMainRect.attr('y')) + (Number(carMainRect.attr('height')) / 2);
 
-        var newX = Number(freeStartPos.attr('cx')) - movingElement.carCenterX;
-        var newY = Number(freeStartPos.attr('cy')) - movingElement.carCenterY;
+    var newX = Number(freeStartPos.attr('cx')) - movingElement.carCenterX;
+    var newY = Number(freeStartPos.attr('cy')) - movingElement.carCenterY;
 
-        //These are dynamically added helper properties. With these I don't need to parse the current value
-        //when I change the transform value.
-        car.X = newX;
-        car.Y = newY;
+    //These are dynamically added helper properties. With these I don't need to parse the current value
+    //when I change the transform value.
+    car.X = newX;
+    car.Y = newY;
 
-        movingElement.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
-    };
+    movingElement.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
+};
+
+app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketService',
+    function(observeOnScope, checkpointService, socketService) {
 
     return {
         link: function (scope, element) {
             var currX, currY, newX, newY, newAngle;
+            var prevAngle = 0;
+            var angleReturnedToZero = function () {
+                return scope.car.steering.angle === 0 && prevAngle !== 0;
+            };
+            var steeringTurnedTheOtherWay = function () {
+                return Math.abs(scope.car.steering.angle) < prevAngle;
+            };
+            var steeringStartedChanging = function () {
+                return scope.car.steering.angle !== 0 && prevAngle === 0;
+            };
 
             moveToStartPos(scope.car, element);
 
             scope.car.direction = 0;
-            scope.car.timestamp = 0;
 
             var revs = observeOnScope(scope, 'car.engine.revs')
                 .filter(function (revs) { return revs.newValue > 0; })
                 .take(1)
                 .selectMany(function () {
                     return Rx.Observable.interval(model.MOVING_RATE)
-                        .takeWhile(function () { return checkpointService.isRaceOn() &&
-                            scope.car.gearbox.currentGear > 0 &&
-                            scope.car.engine.revs > 0; });
+                        .takeWhile(function () {
+                            return  checkpointService.isRaceOn() &&
+                                    scope.car.gearbox.currentGear > 0 &&
+                                    scope.car.engine.revs > 0; });
                 })
                 .repeat();
-
-            var toRadians = function (angle) {
-                return angle * (Math.PI / 180);
-            };
 
             revs.sample(model.STEERING_SAMPLING_RATE).subscribe(function () {
                 newAngle = scope.car.direction + scope.car.steering.angle;
@@ -225,8 +268,24 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
                 if (newAngle > 360) { newAngle = newAngle - 360; }
                 if (newAngle < -360) { newAngle = newAngle + 360; }
 
+                if (angleReturnedToZero() ||
+                    steeringTurnedTheOtherWay() ||
+                    steeringStartedChanging()) {
+                        socketService.send('carMoves', { name: scope.car.name, angle: scope.car.steering.angle} );
+                }
+
                 scope.car.direction = newAngle;
+
+                prevAngle = Math.abs(scope.car.steering.angle);
             });
+
+            revs.takeWhile(function () {
+                return scope.car.currentPresumedSpeed === 0;
+            })
+                .repeat()
+                .subscribe(function () {
+                    socketService.send('carStart', { name: scope.car.name, X: scope.car.X, Y: scope.car.Y, direction: scope.car.direction} );
+                });
 
             revs.subscribe(function () {
                 currX = scope.car.X;
@@ -242,21 +301,102 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', function(o
 
                 scope.car.nextCheckpointCtrl.checkIfCheckpointCrossed(scope.car, currX, currY, newX, newY);
 
+                scope.car.actualSpeed = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
+
                 scope.car.setCurrentSpeed();
 
-                if (socket) {
-                    socket.emit('carMoves', scope.car);
-                }
+                scope.$apply();
+            });
+        }
+    };
+}]);
+
+app.directive('moveremotely', ['socketService', function(socketService) {
+    return {
+        link: function (scope, element) {
+            var thisCarFilter = function (car) { return car.name === scope.car.name; }
+            var newX;
+            var newY;
+            var steeringSubject = new Rx.Subject();
+            var steeringCenteredSubject = new Rx.Subject();
+            var newAngle;
+            var currX;
+            var currY;
+
+            moveToStartPos(scope.car, element);
+
+            scope.car.direction = 0;
+            scope.car.steering.angle = 0;
+            scope.car.steering = new model.Steering(3); //this is now hardcoded.
+
+            var moving = socketService.carStartSub.filter(thisCarFilter)
+                .selectMany(function () {
+                    return Rx.Observable.timer(0, model.MOVING_RATE)
+                        .takeUntil(socketService.carStopSub.filter(thisCarFilter));
+                })
+                .repeat();
+
+            moving.sample(model.STEERING_SAMPLING_RATE).subscribe(function () {
+                newAngle = scope.car.direction + scope.car.steering.angle;
+
+                if (newAngle > 360) { newAngle = newAngle - 360; }
+                if (newAngle < -360) { newAngle = newAngle + 360; }
+
+                scope.car.direction = newAngle;
+            });
+
+            moving.subscribe(function () {
+                currX = scope.car.X;
+                currY = scope.car.Y;
+
+                newY = (Math.sin(toRadians(scope.car.direction)) * model.UNIT_OF_MOVEMENT) + scope.car.Y;
+                newX = (Math.cos(toRadians(scope.car.direction)) * model.UNIT_OF_MOVEMENT) + scope.car.X;
+
+                element.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
+
+                scope.car.X = newX;
+                scope.car.Y = newY;
+
+                scope.car.actualSpeed = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
 
                 scope.$apply();
             });
 
-            socket.on('carMoves', function(car) {
-                if (car.name === scope.car.name) {
-                    element.attr('transform', 'translate ( ' + car.X + ' ' + car.Y + ')');
-                    scope.car.direction = car.direction;
-                    scope.$apply();
+            var turning = steeringSubject
+                .take(1)
+                .selectMany(function (remoteMoves) {
+                    return Rx.Observable.interval(0, model.STEERING_SAMPLING_RATE)
+                        .select(function () { return remoteMoves; })
+                        .takeUntil(steeringCenteredSubject)
+                        .takeWhile(function () { return Math.abs(scope.car.steering.angle) < scope.car.steering.maxAngle; });
+                })
+                .repeat();
+
+            turning.subscribe(function (remoteMoves) {
+                if (remoteMoves.angle > 0) {
+                    scope.car.steering.turnRight();
                 }
+                else if (remoteMoves.angle < 0) {
+                    scope.car.steering.turnLeft();
+                }
+            });
+
+            socketService.carMovesSub.filter(thisCarFilter).subscribe(function (remoteMoves) {
+                if (remoteMoves.angle === 0) {
+                    scope.car.steering.center();
+
+                    steeringCenteredSubject.onNext(remoteMoves);
+                } else {
+                    steeringSubject.onNext(remoteMoves);
+                }
+            });
+
+            socketService.syncCarPosSub.filter(thisCarFilter).subscribe(function (car) {
+                scope.car.X = car.X;
+                scope.car.Y = car.Y;
+                scope.car.direction = car.direction;
+                scope.car.steering.angle = car.steering.angle;
+                scope.$apply();
             });
         }
     };
@@ -349,3 +489,43 @@ app.directive('lapcount', ['checkpointService',  function (checkpointService) {
         }
     };
 }]);
+
+
+/*            var changeDirection = steeringSubject.selectMany(function (angle) {
+ console.log('select many, angle ' + angle);
+ return Rx.Observable.interval(model.STEERING_SAMPLING_RATE)
+ .takeWhile(function () {
+ console.log('inside take while, angle ' + angle);
+ return angle !== 0; }).takeUntil(steeringSubject);
+ }).repeat();
+
+ changeDirection.subscribe(function (angle) {
+ console.log('change direction');
+
+ var newAngle = scope.car.direction + angle;
+
+ if (newAngle > 360) { newAngle = newAngle - 360; }
+ if (newAngle < -360) { newAngle = newAngle + 360; }
+
+ scope.car.direction = newAngle;
+ //scope.$apply();
+ });*/
+
+/*            var steeringChanges = observeOnScope(scope, 'car.steering.angle')
+ .distinctUntilChanged()
+ .throttle(model.STEERING_SAMPLING_RATE)
+ .subscribe(function () {
+ console.log('send angle ' + scope.car.steering.angle);
+ if (socket) {
+ socket.emit('carMoves', { name: scope.car.name, X: scope.car.X, Y: scope.car.Y, angle: scope.car.steering.angle} );
+ }
+ });*/
+
+/*                    moving.sample(model.STEERING_SAMPLING_RATE).subscribe(function () {
+ newAngle = scope.car.direction + scope.car.steering.angle;
+
+ if (newAngle > 360) { newAngle = newAngle - 360; }
+ if (newAngle < -360) { newAngle = newAngle + 360; }
+
+ scope.car.direction = newAngle;
+ });*/

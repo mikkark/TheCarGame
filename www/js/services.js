@@ -1,3 +1,45 @@
+app.factory('socketService', function () {
+    var socket;
+    var service = {};
+
+    service.carStartSub = new Rx.Subject();
+    service.carMovesSub = new Rx.Subject();
+    service.carStopSub = new Rx.Subject();
+    service.syncCarPosSub = new Rx.Subject();
+
+    service.startConn = function () {
+        if (!socket) {
+            socket = io();
+
+            socket.on('carStart', function (car) {
+                service.carStartSub.onNext(car);
+            });
+
+            socket.on('carMoves', function (remoteMoves) {
+                service.carMovesSub.onNext(remoteMoves);
+            });
+
+            socket.on('carStop', function (car) {
+                service.carStopSub.onNext(car);
+            });
+
+            socket.on('syncPos', function (car) {
+                service.syncCarPosSub.onNext(car);
+            });
+        }
+
+        return socket;
+    };
+
+    service.send = function (eventName, params) {
+        if (socket) {
+            socket.emit(eventName, params);
+        }
+    };
+
+    return service;
+});
+
 app.factory('checkpointService', function () {
 
     var checkpointService = function () {
