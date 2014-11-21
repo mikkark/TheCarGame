@@ -43,6 +43,7 @@
 
             <div style="display: inline-block;margin-right:5px;width: 30%;vertical-align: top">
                 <div>
+                    <input type="button" value="Add local car" ng-show="cars.length === 0" ng-click="addLocalCar()" />
                     <input type="button" value="Join multiplayer" ng-show="!multiplayerFull" ng-click="joinMultiplayer()" />
                     <input type="button" value="Spectate multiplayer" ng-click="spectateMultiplayer()" />
                     <label for="numberOfLaps">Number of laps</label>

@@ -91,6 +91,10 @@ app.factory('checkpointService', function () {
             service.lapSubject.onNext({name: 'raceStart'});
         };
 
+        service.getFirstCheckpointCtrl = function () {
+            return service.checkpointCtrlsById[1];
+        };
+
         return service;
 
     };

@@ -16,7 +16,6 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
 
         var addToRemoteCars = function (remoteCar) {
             remoteCar.steering = new model.Steering(remoteCar.steering.turn); //we need an instance here for the turning to work.
-console.log(remoteCar.steering);
             $scope.remoteCars.push(remoteCar);
         };
 
@@ -24,7 +23,6 @@ console.log(remoteCar.steering);
         ferrari.steering = new model.Steering(0.3);
 
         var cars = [
-            ferrari//,
             //new model.Car('tractor', keys1, tractorEngine, 60, 2),
             //new model.Car('skoda rs', keys4, skodaEngine, 180, 3)
         ];
@@ -105,6 +103,12 @@ console.log(remoteCar.steering);
 
             socket.emit('spectate');
         };
+
+        $scope.addLocalCar = function () {
+            ferrari.nextCheckpointCtrl = checkpointService.getFirstCheckpointCtrl();
+
+            cars.push(ferrari);
+        };
 }]);
 
 app.controller('cpController', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
@@ -147,13 +151,6 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
         x2: Number($element.attr('x2')),
         y2: Number($element.attr('y2'))
     };
-
-    //At startup link all cars to this checkpoint.
-    if (this.checkpoint.id === 1) {
-        angular.forEach($scope.cars, function(car, key) {
-            car.nextCheckpointCtrl = currController;
-        });
-    }
 
     checkpointService.registerCheckpoint(currController);
 }]);
