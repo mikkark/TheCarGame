@@ -1,15 +1,15 @@
 'use strict'
 
-app.directive('ngTrack', function () {
+app.directive('ngTrack', ['$templateCache', function ($templateCache) {
     return {
         templateNamespace: 'svg',
         //template: '<svg height="800" style="display: inline-block" width="60%" ng-transclude></svg>',
-        templateUrl: './html/track2.html',
+        templateUrl: $templateCache.get('track.html'),
         restrict: 'E',
         replace: true,
         transclude: true
     };
-});
+}]);
 
 app.directive('powermeter', function () {
     return {
@@ -57,12 +57,12 @@ app.directive('startlights', function () {
     };
 });
 
-app.directive('car', ['socketService', function (socketService) {
+app.directive('car', ['socketService', '$templateCache', function (socketService, $templateCache) {
     return {
         templateNamespace: 'svg',
         restrict: 'E',
         replace: true,
-        templateUrl: './html/carTemplateOldSkool.html',
+        templateUrl: $templateCache.get('carTemplateOldSkool.html'),
         link: function (scope, element) {
 
             var car = scope.car;
@@ -167,12 +167,12 @@ var setFrontWheelCenters = function (car, element) {
     car.leftTyreCenterX = Number(left.attr('x1')) + ((Number(left.attr('x2')) - Number(left.attr('x1'))) / 2);
 };
 
-app.directive('remotecar', function () {
+app.directive('remotecar', ['$templateCache', function ($templateCache) {
     return {
         templateNamespace: 'svg',
         restrict: 'E',
         replace: true,
-        templateUrl: './html/carTemplateOldSkool.html',
+        templateUrl: $templateCache.get('carTemplateOldSkool.html'),
         link: function (scope, element) {
 
             var car = scope.car;
@@ -180,7 +180,7 @@ app.directive('remotecar', function () {
             setFrontWheelCenters(car, element);
         }
     };
-});
+}]);
 
 var toRadians = function (angle) {
     return angle * (Math.PI / 180);
