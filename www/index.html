@@ -63,7 +63,7 @@
             </div>
 
             <svg width="800" height="600" transform="scale ( 1.2 )">
-                <track ng-cloak id="track"  style="border: 5px solid;" />
+                <ng-track ng-cloak id="track" style="border: 5px solid;"></ng-track>
                 <car movingobject ng-repeat="car in cars"></car>
                 <remotecar moveremotely ng-repeat="car in remoteCars track by car.name"></remotecar>
                 <startlights x="200" y="130" transform="scale ( 0.8 )"></startlights>

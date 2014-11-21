@@ -1,8 +1,9 @@
 app.factory('socketService', function () {
     var socket;
     var service = {};
+    var carStartSub = new Rx.Subject();
 
-    service.carStartSub = new Rx.Subject();
+    service.carStartSub = function () { return carStartSub; };
     service.carMovesSub = new Rx.Subject();
     service.carStopSub = new Rx.Subject();
     service.syncCarPosSub = new Rx.Subject();
@@ -12,7 +13,7 @@ app.factory('socketService', function () {
             socket = io();
 
             socket.on('carStart', function (car) {
-                service.carStartSub.onNext(car);
+                carStartSub.onNext(car);
             });
 
             socket.on('carMoves', function (remoteMoves) {

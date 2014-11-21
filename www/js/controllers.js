@@ -14,8 +14,14 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
         var keys3 = { gas: 70, left: 88, right: 86, gearUp: 90, gearUpString: String.fromCharCode(90) };
         var keys4 = { gas: 104, left: 100, right: 102, gearUp: 103, gearUpString: String.fromCharCode(103) };
 
+        var addToRemoteCars = function (remoteCar) {
+            remoteCar.steering = new model.Steering(remoteCar.steering.turn); //we need an instance here for the turning to work.
+console.log(remoteCar.steering);
+            $scope.remoteCars.push(remoteCar);
+        };
+
         var ferrari = new model.Car('ferrari' + (Math.random() * 10).toFixed(0), keys2, ferrariEngine, 320, ((Math.random() * 10) + 1).toFixed(0));
-        ferrari.steering = new model.Steering(3);
+        ferrari.steering = new model.Steering(0.3);
 
         var cars = [
             ferrari//,
@@ -41,8 +47,9 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
             socket.on('someoneJoinedGame', function (newPlayersCars) {
                 if (newPlayersCars.length > 0) {
                     for (var i = 0; i < newPlayersCars.length; i++) {
-                        $scope.remoteCars.push(newPlayersCars[i]);
+                        addToRemoteCars(newPlayersCars[i]);
                     }
+                    console.log($scope.remoteCars.length);
                     $scope.$apply();
                 }
             });
@@ -51,9 +58,10 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
                 if (otherPlayersCars.length > 0) {
                     for (var j = 0; j < otherPlayersCars.length; j++) {
                         for (var i = 0; i < otherPlayersCars[j].length; i++) {
-                            $scope.remoteCars.push(otherPlayersCars[j][i]);
+                            addToRemoteCars(otherPlayersCars[j][i]);
                         }
                     }
+                    console.log($scope.remoteCars.length);
                     $scope.$apply();
                 }
             });
@@ -83,11 +91,11 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
 
             socket.emit('join', $scope.cars);
 
-            Rx.Observable.timer(model.SYNC_RATE, model.SYNC_RATE).subscribe(function () {
+/*            Rx.Observable.timer(model.SYNC_RATE, model.SYNC_RATE).subscribe(function () {
                for (var i = 0; i < $scope.cars.length; i++) {
                    socket.emit('syncPos', $scope.cars[i]);
                }
-            });
+            });*/
         };
 
         $scope.spectateMultiplayer = function () {

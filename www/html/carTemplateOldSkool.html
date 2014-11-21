@@ -1,0 +1,11 @@
+<svg x="0" y="0" viewBox="-20 -30 1200 900">
+    <g transform="rotate({{car.direction }} 35 16 )">
+        <rect class="carMainRect" id="svg_1" height="32" width="70" y="9.200012" x="0" stroke-width="5" stroke="#000000" fill="#FF0000" />
+        <line id="rightFront" transform="rotate( {{car.steering.angle * 9 }} {{car.rightTyreCenterX }} {{car.rightTyreCenterY }} )" y2="46.200012" x2="65.402712" y1="46.200012" x1="46.402711" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="8" stroke="#000000" fill="none" />
+        <line id="rightRear"  y2="4.70079" x2="21.70038" y1="4.70079" x1="3.70038" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="8" stroke="#000000" fill="none" />
+        <line id="leftFront" transform="rotate( {{car.steering.angle * 9 }} {{car.leftTyreCenterX }} {{car.leftTyreCenterY }} )" y2="3.70079" x2="63.70038" y1="3.70079" x1="46.4" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="8" stroke="#000000" fill="none" />
+        <line id="leftRear"  y2="45.70079" x2="22.70038" y1="45.70079" x1="3.70038" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="8" stroke="#000000" fill="none" />
+        <rect id="somesvg" height="29" width="29" y="10.200012" x="19.399994" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="8" stroke="#000000" fill="none" />
+        <text stroke="#000000" fill="#000000" x="35" y="30" text-anchor="middle" font-family="serif" font-size="20">{{car.carNumber}}</text>
+    </g>
+</svg>

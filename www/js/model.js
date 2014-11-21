@@ -18,7 +18,7 @@ createModel = function () {
         this.keys = keys;
         this.speed = 0;
         this.engine = engine;
-        this.steering = new Steering(1);
+        this.steering = new Steering(0.1);
         this.maxspeed = maxspeed;
         this.currentPresumedSpeed = 0;
         this.gearbox = new Gearbox(model.MAX_GEARS);
@@ -73,7 +73,7 @@ createModel = function () {
 
     function Steering(turn) {
         this.maxAngle = 5;
-        this.turn = turn / 10;
+        this.turn = turn;
         this.angle = 0; //+ or - maxAngle, 0 is straight.
     }
 
