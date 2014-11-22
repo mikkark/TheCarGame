@@ -79,6 +79,16 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
                 }
             });
 
+            socket.on('settings', function (settings) {
+                var syncRate = parseInt(settings.remoteCarSyncRate);
+
+                Rx.Observable.timer(syncRate, syncRate).subscribe(function () {
+                    for (var i = 0; i < $scope.cars.length; i++) {
+                        socket.emit('syncPos', $scope.cars[i]);
+                    }
+                });
+            });
+
             return socket;
         };
 
@@ -88,12 +98,6 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
             }
 
             socket.emit('join', $scope.cars);
-
-/*            Rx.Observable.timer(model.SYNC_RATE, model.SYNC_RATE).subscribe(function () {
-               for (var i = 0; i < $scope.cars.length; i++) {
-                   socket.emit('syncPos', $scope.cars[i]);
-               }
-            });*/
         };
 
         $scope.spectateMultiplayer = function () {

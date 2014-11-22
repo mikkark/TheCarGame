@@ -16,6 +16,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 var multiplayerGame = [];
+var remoteCarsSyncRate = process.env.REMOTE_CARS_SYNC_RATE || 4000;
 
 io.on('connection', function(socket){
     socket.on('join', function(playersCars) {
@@ -37,8 +38,8 @@ io.on('connection', function(socket){
             .map(function (player) { return player.cars; });
 
         socket.emit('otherPlayers', others);
-
         socket.broadcast.emit('someoneJoinedGame', playersCars);
+        socket.emit('settings', { remoteCarSyncRate: remoteCarsSyncRate });
 
         multiplayerGame.push({ socket: socket, cars: playersCars });
     });
@@ -66,18 +67,12 @@ io.on('connection', function(socket){
         var i = multiplayerGame.map(function (player) { return player.socket.id; }).indexOf(socket.id);
         var leavingCars = [];
 
-        console.log(i);
-
         if (i >= 0) {
             leavingCars = multiplayerGame[i].cars;
             multiplayerGame.splice(i, 1);
         }
 
-        console.log(leavingCars.map(function (car) { return car.name; }));
-
         multiplayerGame.map(function (otherPlayer) { otherPlayer.socket.emit('playerLeft', leavingCars); });
-
-        console.log('remaining: ' + multiplayerGame.length);
     });
 });
 
