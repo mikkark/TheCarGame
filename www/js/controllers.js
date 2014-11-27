@@ -47,7 +47,6 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
                     for (var i = 0; i < newPlayersCars.length; i++) {
                         addToRemoteCars(newPlayersCars[i]);
                     }
-                    console.log($scope.remoteCars.length);
                     $scope.$apply();
                 }
             });
@@ -59,7 +58,6 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
                             addToRemoteCars(otherPlayersCars[j][i]);
                         }
                     }
-                    console.log($scope.remoteCars.length);
                     $scope.$apply();
                 }
             });
@@ -159,20 +157,29 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
     checkpointService.registerCheckpoint(currController);
 }]);
 
-app.controller('startlightscontroller', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
-    $scope.litupLights = 0;
+app.controller('startlightscontroller', ['$scope', '$element', 'checkpointService', 'socketService',
+    function ($scope, $element, checkpointService, socketService) {
+        var startTheLights = function () {
 
-    $scope.startLights = function () {
+            if ($scope.litupLights > 0) { return; }
 
-        if ($scope.litupLights > 0) { return; }
+            Rx.Observable.timer(0, 1000).take(4).subscribe(function () {
+                $scope.litupLights = $scope.litupLights + 1;
+                if ($scope.litupLights > 3) {
+                    $scope.litupLights = 0;
+                    checkpointService.start();
+                }
+                $scope.$apply();
+            });
+        };
 
-        Rx.Observable.timer(0, 1000).take(4).subscribe(function () {
-            $scope.litupLights = $scope.litupLights + 1;
-            if ($scope.litupLights > 3) {
-                $scope.litupLights = 0;
-                checkpointService.start();
-            }
-            $scope.$apply();
-        });
-    };
-}]);
+        $scope.litupLights = 0;
+
+        $scope.startLights = function () {
+            socketService.send('raceStartClicked');
+
+            startTheLights();
+        };
+
+        socketService.onRaceStartClicked = startTheLights;
+    }]);

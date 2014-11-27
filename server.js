@@ -51,6 +51,10 @@ io.on('connection', function(socket){
         socket.emit('otherPlayers', allOtherCars);
     });
 
+    socket.on('raceStartClicked', function () {
+        socket.broadcast.emit('raceStartClicked');
+    });
+
     socket.on('carMoves', function (car) {
         socket.broadcast.emit('carMoves', car);
     });
