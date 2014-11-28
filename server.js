@@ -67,6 +67,14 @@ io.on('connection', function(socket){
     socket.on('syncPos', function (car) {
         socket.broadcast.emit('syncPos', car);
     });
+
+    socket.on('bestLapTime', function (data) {
+       socket.broadcast.emit('bestLapTime', data);
+    });
+    socket.on('lastLapTime', function (data) {
+        socket.broadcast.emit('lastLapTime', data);
+    });
+
     socket.on('disconnect', function () {
         var i = multiplayerGame.map(function (player) { return player.socket.id; }).indexOf(socket.id);
         var leavingCars = [];

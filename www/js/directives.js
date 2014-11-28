@@ -261,6 +261,7 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketSer
                 })
                     .repeat()
                     .subscribe(function () {
+                        console.log('car start');
                         socketService.send('carStart', { name: scope.car.name, X: scope.car.X, Y: scope.car.Y, direction: scope.car.direction} );
                     });
 
@@ -305,7 +306,7 @@ app.directive('moveremotely', ['socketService', function(socketService) {
             scope.car.direction = 0;
             scope.car.steering.angle = 0;
 
-            var moving = socketService.carStartSub().filter(thisCarFilter)
+            var moving = socketService.carStartSub.filter(thisCarFilter)
                 .take(1)
                 .selectMany(function () {
                     return Rx.Observable.interval(model.MOVING_RATE)
@@ -401,12 +402,13 @@ app.directive('carstartpos', function () {
     };
 });
 
-app.directive('lapcount', ['checkpointService', 'lapService',  function (checkpointService, lapService) {
+app.directive('lapcount',  function () {
     return {
         restrict: 'E',
         replace: true,
         scope: {
-            carname: '=carname'
+            carname: '=carname',
+            isremote: '=isremote'
         },
         template: '<div>' +
                     '<div>lap:{{lap}}. last:{{lastLapTime}}s. best:{{bestLapTime}}</div>' +
@@ -414,60 +416,6 @@ app.directive('lapcount', ['checkpointService', 'lapService',  function (checkpo
                         '<div>{{checkpointtime}}</div>' +
                     '</div>' +
                   '</div>',
-        link: function (scope) {
-            scope.lap = 1;
-            scope.checkpointtimes = [];
-
-            var stillLapsToGo = function () {
-                return scope.lap <= checkpointService.numberOfLaps;
-            };
-
-            var myStream = checkpointService.checkpointSub
-                .filter(function (item) { return item.name === scope.carname || item.name === 'raceStart'})
-                .takeWhile(stillLapsToGo);
-
-            var finishLine = lapService.lapUpSub.filter(function (item) {
-                return item.name === scope.carname;
-            }).select(function () { return 'finish'; });
-
-            finishLine.subscribe(function () {
-                scope.lap = scope.lap + 1;
-            });
-
-            var aggregated = myStream.takeUntil(finishLine).merge(finishLine.timestamp().take(1))
-                .aggregate(0, function(acc, data) {
-                    if (acc === 0) {
-                        return data.time;
-                    } else if (data.value === 'finish') {
-                        return data.timestamp - acc;
-                    } else {
-                        scope.checkpointtimes.push((data.time - acc) / 1000);
-                        return acc;
-                    }
-                }).repeat();
-
-            var lapTimesSub = new Rx.Subject();
-
-            aggregated.subscribe(function (elapsedTime) {
-                scope.lastLapTime = elapsedTime / 1000;
-                scope.checkpointtimes = [];
-
-                lapTimesSub.onNext(elapsedTime);
-            });
-
-            //Stop scanning when laps are up, otherwise we would get a zero here that would reset the best time.
-            var bestLapTime = lapTimesSub.takeWhile(stillLapsToGo).scan(0, function (acc, lapTime) {
-                if (lapTime < acc || acc === 0) {
-                    return lapTime;
-                } else {
-                    return acc;
-                }
-            });
-
-            bestLapTime.subscribe(function (bestLapTime) {
-                scope.bestLapTime = bestLapTime;
-                scope.$apply();
-            });
-        }
+        controller: 'lapCountControllerSelector'
     };
-}]);
+});

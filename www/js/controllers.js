@@ -157,6 +157,92 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
     checkpointService.registerCheckpoint(currController);
 }]);
 
+var localLapCountController = function (scope, checkpointService, lapService, socketService) {
+        scope.lap = 1;
+        scope.checkpointtimes = [];
+
+        var stillLapsToGo = function () {
+            return scope.lap <= checkpointService.numberOfLaps;
+        };
+
+        var myStream = checkpointService.checkpointSub
+            .filter(function (item) { return item.name === scope.carname || item.name === 'raceStart'})
+            .takeWhile(stillLapsToGo);
+
+        var finishLine = lapService.lapUpSub.filter(function (item) {
+            return item.name === scope.carname;
+        }).select(function () { return 'finish'; });
+
+        finishLine.subscribe(function () {
+            scope.lap = scope.lap + 1;
+        });
+
+        var aggregated = myStream.takeUntil(finishLine).merge(finishLine.timestamp().take(1))
+            .aggregate(0, function(acc, data) {
+                if (acc === 0) {
+                    return data.time;
+                } else if (data.value === 'finish') {
+                    return data.timestamp - acc;
+                } else {
+                    scope.checkpointtimes.push((data.time - acc) / 1000);
+                    return acc;
+                }
+            }).repeat();
+
+        var lapTimesSub = new Rx.Subject();
+
+        aggregated.subscribe(function (elapsedTime) {
+            scope.lastLapTime = elapsedTime / 1000;
+            scope.checkpointtimes = [];
+
+            socketService.send('lastLapTime', { carName: scope.carname, lastLapTime: scope.lastLapTime });
+
+            lapTimesSub.onNext(elapsedTime);
+        });
+
+        //Stop scanning when laps are up, otherwise we would get a zero here that would reset the best time.
+        var bestLapTime = lapTimesSub.takeWhile(stillLapsToGo).scan(0, function (acc, lapTime) {
+            if (lapTime < acc || acc === 0) {
+                return lapTime;
+            } else {
+                return acc;
+            }
+        });
+
+        bestLapTime.subscribe(function (bestLapTime) {
+            scope.bestLapTime = bestLapTime;
+            scope.$apply();
+
+            socketService.send('bestLapTime', { carName: scope.carname, bestLapTime: bestLapTime });
+        });
+};
+
+var remoteLapCountController = function (scope, checkpointService, lapService, socketService) {
+    scope.lap = 1;
+
+    var setLastLapTimeAndLapCount = function (data) {
+        if (data.carName === scope.carname) {
+            scope.lastLapTime = data.lastLapTime;
+
+            scope.lap = scope.lap + 1;
+        }
+    };
+    var setBestLapTime = function (data) {
+        if (data.carName === scope.carname) {
+            scope.bestLapTime = data.bestLapTime;
+        }
+    };
+
+    socketService.onLastLapTimeReceived = setLastLapTimeAndLapCount;
+    socketService.onBestLapTimeReceived = setBestLapTime;
+};
+
+app.controller('lapCountControllerSelector', ['$scope', 'checkpointService', 'lapService', 'socketService',
+    function (scope, checkpointService, lapService, socketService) {
+        scope.isremote ? remoteLapCountController(scope, checkpointService, lapService, socketService) :
+                         localLapCountController(scope, checkpointService, lapService, socketService);
+    }]);
+
 app.controller('startlightscontroller', ['$scope', '$element', 'checkpointService', 'socketService',
     function ($scope, $element, checkpointService, socketService) {
         var startTheLights = function () {

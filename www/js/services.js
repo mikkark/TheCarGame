@@ -1,20 +1,21 @@
 app.factory('socketService', function () {
     var socket;
     var service = {};
-    var carStartSub = new Rx.Subject();
 
-    service.carStartSub = function () { return carStartSub; };
+    service.carStartSub = new Rx.Subject();
     service.carMovesSub = new Rx.Subject();
     service.carStopSub = new Rx.Subject();
     service.syncCarPosSub = new Rx.Subject();
     service.onRaceStartClicked = function () { };
+    service.onBestLapTimeReceived = function (data) { };
+    service.onLastLapTimeReceived = function (data) { };
 
     service.startConn = function () {
         if (!socket) {
             socket = io();
 
             socket.on('carStart', function (car) {
-                carStartSub.onNext(car);
+                service.carStartSub.onNext(car);
             });
 
             socket.on('carMoves', function (remoteMoves) {
@@ -31,6 +32,13 @@ app.factory('socketService', function () {
 
             socket.on('raceStartClicked', function () {
                service.onRaceStartClicked();
+            });
+
+            socket.on('lastLapTime', function (data) {
+               service.onLastLapTimeReceived(data);
+            });
+            socket.on('bestLapTime', function (data) {
+                service.onBestLapTimeReceived(data);
             });
         }
 
