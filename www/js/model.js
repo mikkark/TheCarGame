@@ -17,6 +17,7 @@ createModel = function () {
         this.carNumber = carNumber;
         this.keys = keys;
         this.speed = 0;
+        this.fuelTank = new FuelTank(100);
         this.engine = engine;
         this.steering = new Steering(0.1);
         this.maxspeed = maxspeed;
@@ -49,6 +50,30 @@ createModel = function () {
     Car.prototype.changeUp = function () {
         this.engine.revs = this.engine.revs - (this.engine.maxRevs * 0.5);
         this.gearbox.currentGear = this.gearbox.currentGear + 1;
+    };
+
+    function FuelTank(tankSize, isFuelConsumed) {
+        this.fuelLeft = tankSize;
+        this.tankSize = tankSize;
+        this.isFuelConsumed = isFuelConsumed || true;
+    }
+
+    FuelTank.prototype.consumeFuel = function (consumedAmount) {
+        if (this.isFuelConsumed) {
+            if (this.fuelLeft > 0) {
+                this.fuelLeft = this.fuelLeft - consumedAmount;
+            }
+        }
+    };
+
+    FuelTank.prototype.refuel = function (amountToPutIn) {
+        if (this.fuelLeft < this.tankSize) {
+            this.fuelLeft = this.fuelLeft + amountToPutIn;
+        }
+
+        if (this.fuelLeft > this.tankSize) {
+            this.fuelLeft = this.tankSize;
+        }
     };
 
     function Gearbox(maxGears) {

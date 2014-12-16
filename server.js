@@ -20,6 +20,7 @@ var remoteCarsSyncRate = process.env.REMOTE_CARS_SYNC_RATE || 4000;
 
 io.on('connection', function(socket){
     socket.on('join', function(playersCars) {
+        console.log(socket.id + ' connect ('+ socket.client.conn.transport.constructor.name +')');
 
         var setAsRemoteCar = function (playersCar) {
             playersCar.isRemote = true;
@@ -78,7 +79,7 @@ io.on('connection', function(socket){
     socket.on('disconnect', function () {
         var i = multiplayerGame.map(function (player) { return player.socket.id; }).indexOf(socket.id);
         var leavingCars = [];
-
+        console.log(socket.id + ' disconnect ('+ socket.client.conn.transport.constructor.name +')');
         if (i >= 0) {
             leavingCars = multiplayerGame[i].cars;
             multiplayerGame.splice(i, 1);

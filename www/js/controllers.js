@@ -30,6 +30,7 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
         $scope.cars = cars;
         $scope.remoteCars = [];
         $scope.numberOfLaps = checkpointService.numberOfLaps = 3;
+        $scope.isFuelConsumed = true;
 
         $scope.numberOfLapsChanged = function () {
             checkpointService.numberOfLaps = $scope.numberOfLaps;
@@ -109,11 +110,13 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
         $scope.addLocalCar = function () {
             ferrari.nextCheckpointCtrl = checkpointService.getFirstCheckpointCtrl();
 
+            ferrari.fuelTank.isFuelConsumed = $scope.isFuelConsumed;
+
             cars.push(ferrari);
         };
 }]);
 
-app.controller('cpController', ['$scope', '$element', 'checkpointService', function ($scope, $element, checkpointService) {
+app.controller('cpController', ['$scope', '$element', 'checkpointService', 'eventBroadcast', function ($scope, $element, checkpointService, eventBroadcast) {
 
     var currController = this;
 
@@ -136,15 +139,15 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', funct
         return false;
     };
 
-    this.checkIfCheckpointCrossed = function (car, carPrevX, carPrevY, carNewX, carNewY) {
-        var intersect = getLineIntersection(carPrevX, carPrevY, carNewX, carNewY, currController.checkpoint.x1, currController.checkpoint.y1, currController.checkpoint.x2, currController.checkpoint.y2);
+    eventBroadcast.oncarMoved($scope, function (data) {
+        if (data.car.nextCheckpointCtrl === currController) {
+            var intersect = getLineIntersection(data.oldX, data.oldY, data.x, data.y, currController.checkpoint.x1, currController.checkpoint.y1, currController.checkpoint.x2, currController.checkpoint.y2);
 
-        if (intersect) {
-            checkpointService.checkpointReached(currController, car);
+            if (intersect) {
+                checkpointService.checkpointReached(currController, data.car);
+            }
         }
-
-        return intersect;
-    };
+    });
 
     this.checkpoint =  {
         id: Number($element.attr('checkpointId')),

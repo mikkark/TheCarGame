@@ -48,6 +48,8 @@
                     <input type="button" value="Spectate multiplayer" ng-click="spectateMultiplayer()" />
                     <label for="numberOfLaps">Number of laps</label>
                     <input id="numberOfLaps" type="number" ng-change="numberOfLapsChanged()" ng-model="numberOfLaps" />
+                    <label for="fuelConsumption">Is fuel consumption on:</label>
+                    <input id="fuelConsumption" type="checkbox" ng-model="isFuelConsumed" />
                 </div>
                 <br />
                 <div id="carControls" ng-repeat="car in allCars = cars.concat(remoteCars) track by car.name">
@@ -58,6 +60,7 @@
                         <steering ng-show="!car.isRemote"></steering>
                         <gearbox ng-show="!car.isRemote"></gearbox>
                     </div>
+                    <fueltank ng-show="!car.isRemote" style="display: inline-block; width: 10%;vertical-align: bottom"></fueltank>
                     <powermeter ng-show="!car.isRemote" style="display: inline-block;width: 20%;vertical-align: bottom"></powermeter>
                     <lapcount style="display: inline-block;width: 30%;vertical-align: top" carname="car.name" isremote="car.isRemote"></lapcount>
                 </div>
@@ -65,6 +68,7 @@
 
             <svg width="800" height="600" transform="scale ( 1.2 )">
                 <ng-track ng-cloak id="track" style="border: 5px solid;"></ng-track>
+                <pit></pit>
                 <car movingobject ng-repeat="car in cars"></car>
                 <remotecar moveremotely ng-repeat="car in remoteCars track by car.name"></remotecar>
                 <startlights x="200" y="130" transform="scale ( 0.8 )"></startlights>

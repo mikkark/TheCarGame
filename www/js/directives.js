@@ -20,6 +20,15 @@ app.directive('powermeter', function () {
     };
 });
 
+app.directive('fueltank', function () {
+    return {
+        template: '<div style="height: {{(car.fuelTank.fuelLeft/car.fuelTank.tankSize)*100}}px;background-color: black"></div>',
+        restrict: 'E',
+        transclude: true,
+        replace: true
+    };
+});
+
 app.directive('speedometer', function () {
     return {
         template: '<div>speed:{{car.currentPresumedSpeed}},actual:{{car.actualSpeed}}</div>',
@@ -57,7 +66,7 @@ app.directive('startlights', function () {
     };
 });
 
-app.directive('car', ['socketService', '$templateCache', function (socketService, $templateCache) {
+app.directive('car', ['socketService', '$templateCache', 'eventBroadcast', function (socketService, $templateCache, eventBroadcast) {
     return {
         templateNamespace: 'svg',
         restrict: 'E',
@@ -92,7 +101,6 @@ app.directive('car', ['socketService', '$templateCache', function (socketService
             });
 
             keydown.filter(gasKeyFilter)
-                .take(1)
                 .selectMany(function () {
                     return Rx.Observable.interval(0, model.GAS_PEDAL_SAMPLING_RATE)
                         .takeUntil(keyup.filter(gasKeyFilter))
@@ -107,7 +115,6 @@ app.directive('car', ['socketService', '$templateCache', function (socketService
             var turnLeft = keydown.filter(steerLeftFilter).select(function (kb) {
                 return kb.keyCode;
             })
-                .take(1)
                 .selectMany(function (keyCode) {
                     return Rx.Observable.interval(0, model.STEERING_SAMPLING_RATE)
                         .select(function () { return keyCode; })
@@ -124,7 +131,6 @@ app.directive('car', ['socketService', '$templateCache', function (socketService
             var turnRight = keydown.filter(steerRightFilter).select(function (kb) {
                 return kb.keyCode;
             })
-                .take(1)
                 .selectMany(function (keyCode) {
                     return Rx.Observable.interval(0, model.STEERING_SAMPLING_RATE)
                         .select(function () { return keyCode; })
@@ -149,6 +155,8 @@ app.directive('car', ['socketService', '$templateCache', function (socketService
             keyup.filter(gasKeyFilter).subscribe(function () {
                 car.break();
                 scope.$apply();
+
+                eventBroadcast.carStops(car);
 
                 socketService.send('carStop', { name: car.name});
             });
@@ -206,8 +214,8 @@ var moveToStartPos = function (car, movingElement) {
     movingElement.attr('transform', 'translate ( ' + newX + ' ' + newY + ')');
 };
 
-app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketService',
-    function(observeOnScope, checkpointService, socketService) {
+app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketService', 'eventBroadcast',
+    function(observeOnScope, checkpointService, socketService, eventBroadcast) {
 
         return {
             link: function (scope, element) {
@@ -235,7 +243,8 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketSer
                             .takeWhile(function () {
                                 return  checkpointService.isRaceOn() &&
                                     scope.car.gearbox.currentGear > 0 &&
-                                    scope.car.engine.revs > 0; });
+                                    scope.car.engine.revs > 0 &&
+                                    scope.car.fuelTank.fuelLeft > 0 });
                     })
                     .repeat();
 
@@ -277,11 +286,14 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketSer
                     scope.car.X = newX;
                     scope.car.Y = newY;
 
-                    scope.car.nextCheckpointCtrl.checkIfCheckpointCrossed(scope.car, currX, currY, newX, newY);
+                    eventBroadcast.carMoved({ car: scope.car, x: currX, y: currY, oldX: newX, oldY: newY });
+
+                    //scope.car.nextCheckpointCtrl.checkIfCheckpointCrossed(scope.car, currX, currY, newX, newY);
 
                     scope.car.actualSpeed = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
 
                     scope.car.setCurrentSpeed();
+                    scope.car.fuelTank.consumeFuel(0.1);
 
                     scope.$apply();
                 });
@@ -419,3 +431,44 @@ app.directive('lapcount',  function () {
         controller: 'lapCountControllerSelector'
     };
 });
+
+app.directive('pit', ['eventBroadcast', function(eventBroadcast) {
+   return {
+       restrict: 'E',
+       replace: true,
+       templateUrl: './html/pit.html',
+       link: function (scope, element) {
+
+           var isInPit = function (car) {
+               return car.X > 135 && car.X < 185 && car.Y > 350 && car.Y < 450;
+           };
+
+           var observer;
+           var carMovedObs = Rx.Observable.create(function (o) {
+                observer = o;
+           });
+
+           eventBroadcast.oncarMoved(scope, function(data) {
+               if (observer) {
+                   observer.onNext(data);
+               }
+           });
+
+           eventBroadcast.onCarStops(scope, function (car) {
+                if (isInPit(car)) {
+                    var timestamp = new Date();
+                    Rx.Observable.interval(100).takeWhile(function () {
+                        return isInPit(car) && car.fuelTank.fuelLeft < car.fuelTank.tankSize;
+                    }).takeUntil(carMovedObs.filter(function (data) {
+                        console.log('car moved');
+                        return data.car.name === car.name;
+                    })).subscribe(function () {
+                        car.fuelTank.refuel(0.5);
+                        scope.$apply();
+                        console.log(timestamp);
+                    }, function () { console.log('completed'); });
+                }
+           });
+       }
+   };
+}]);
