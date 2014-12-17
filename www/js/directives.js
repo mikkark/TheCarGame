@@ -190,10 +190,6 @@ app.directive('remotecar', ['$templateCache', function ($templateCache) {
     };
 }]);
 
-var toRadians = function (angle) {
-    return angle * (Math.PI / 180);
-};
-
 var moveToStartPos = function (car, movingElement) {
     var freeStartPos = $('[carstartpos=""]').first();
 
@@ -287,8 +283,6 @@ app.directive('movingobject', ['observeOnScope', 'checkpointService', 'socketSer
                     scope.car.Y = newY;
 
                     eventBroadcast.carMoved({ car: scope.car, x: currX, y: currY, oldX: newX, oldY: newY });
-
-                    //scope.car.nextCheckpointCtrl.checkIfCheckpointCrossed(scope.car, currX, currY, newX, newY);
 
                     scope.car.actualSpeed = Math.sqrt(Math.pow(Math.abs(newX - currX), 2) + Math.pow(Math.abs(newY - currY), 2));
 
@@ -440,7 +434,9 @@ app.directive('pit', ['eventBroadcast', function(eventBroadcast) {
        link: function (scope, element) {
 
            var isInPit = function (car) {
-               return car.X > 135 && car.X < 185 && car.Y > 350 && car.Y < 450;
+               var normalizedPos = getNormalizedCarPos(car.X, car.Y);
+               return normalizedPos.X + 20 > 135 && normalizedPos.X + 20 < 185 &&
+                   normalizedPos.Y + 30 > 350 && normalizedPos.Y + 30 < 450;
            };
 
            var observer;

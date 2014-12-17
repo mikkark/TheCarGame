@@ -30,7 +30,7 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
         $scope.cars = cars;
         $scope.remoteCars = [];
         $scope.numberOfLaps = checkpointService.numberOfLaps = 3;
-        $scope.isFuelConsumed = true;
+        $scope.isFuelConsumed = false;
 
         $scope.numberOfLapsChanged = function () {
             checkpointService.numberOfLaps = $scope.numberOfLaps;
@@ -91,29 +91,29 @@ app.controller('main', ['$scope', 'checkpointService', 'socketService',
             return socket;
         };
 
-        $scope.joinMultiplayer = function () {
-            if (!socket) {
-                socket = getSocket();
-            }
+    $scope.joinMultiplayer = function () {
+        if (!socket) {
+            socket = getSocket();
+        }
 
-            socket.emit('join', $scope.cars);
-        };
+        socket.emit('join', $scope.cars);
+    };
 
-        $scope.spectateMultiplayer = function () {
-            if (!socket) {
-                socket = getSocket();
-            }
+    $scope.spectateMultiplayer = function () {
+        if (!socket) {
+            socket = getSocket();
+        }
 
-            socket.emit('spectate');
-        };
+        socket.emit('spectate');
+    };
 
-        $scope.addLocalCar = function () {
-            ferrari.nextCheckpointCtrl = checkpointService.getFirstCheckpointCtrl();
+    $scope.addLocalCar = function () {
+        ferrari.nextCheckpointCtrl = checkpointService.getFirstCheckpointCtrl();
 
-            ferrari.fuelTank.isFuelConsumed = $scope.isFuelConsumed;
+        ferrari.fuelTank.isFuelConsumed = $scope.isFuelConsumed;
 
-            cars.push(ferrari);
-        };
+        cars.push(ferrari);
+    };
 }]);
 
 app.controller('cpController', ['$scope', '$element', 'checkpointService', 'eventBroadcast', function ($scope, $element, checkpointService, eventBroadcast) {
@@ -141,7 +141,11 @@ app.controller('cpController', ['$scope', '$element', 'checkpointService', 'even
 
     eventBroadcast.oncarMoved($scope, function (data) {
         if (data.car.nextCheckpointCtrl === currController) {
-            var intersect = getLineIntersection(data.oldX, data.oldY, data.x, data.y, currController.checkpoint.x1, currController.checkpoint.y1, currController.checkpoint.x2, currController.checkpoint.y2);
+            var normalizedOldPos = getNormalizedCarPos(data.oldX, data.oldY);
+            var normalizedCurrPos = getNormalizedCarPos(data.x, data.y);
+            var intersect = getLineIntersection(normalizedOldPos.X, normalizedOldPos.Y, normalizedCurrPos.X, normalizedCurrPos.Y,
+                currController.checkpoint.x1, currController.checkpoint.y1,
+                currController.checkpoint.x2, currController.checkpoint.y2);
 
             if (intersect) {
                 checkpointService.checkpointReached(currController, data.car);

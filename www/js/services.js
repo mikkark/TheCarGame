@@ -60,7 +60,7 @@ app.factory('checkpointService', function () {
 
         var service = this;
         var isRaceOn = false;
-        var checkpointSubject = new Rx.Subject();
+        var privateCheckpointSub = new Rx.Subject();
 
         service.isRaceOn = function () {
             return isRaceOn;
@@ -80,7 +80,7 @@ app.factory('checkpointService', function () {
         service.checkpointCtrlsById = {};
         service.checkpointSub = new Rx.Subject();
 
-        checkpointSubject.timestamp().subscribe(function (data) {
+        privateCheckpointSub.timestamp().subscribe(function (data) {
             service.checkpointSub.onNext({ time: data.timestamp, name: data.value.name, id: data.value.id });
         });
 
@@ -92,16 +92,16 @@ app.factory('checkpointService', function () {
         service.checkpointReached = function (checkpointController, car) {
             car.nextCheckpointCtrl = service.getNextCheckpoint(checkpointController.checkpoint);
 
-            checkpointSubject.onNext({name: car.name, id: checkpointController.checkpoint.id});
+            privateCheckpointSub.onNext({name: car.name, id: checkpointController.checkpoint.id});
 
             if (checkpointController.checkpoint.id === service.numberOfCheckpoints) {
-                checkpointSubject.onNext({name: car.name, id: 0});
+                privateCheckpointSub.onNext({name: car.name, id: 0});
             }
         };
 
         service.start = function () {
             isRaceOn = true;
-            checkpointSubject.onNext({name: 'raceStart'});
+            privateCheckpointSub.onNext({name: 'raceStart'});
         };
 
         service.getFirstCheckpointCtrl = function () {
